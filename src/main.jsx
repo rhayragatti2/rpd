@@ -2,24 +2,26 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Renderização do React
+// Inicializa a renderização do React na div #root
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
 
-// Registro do Service Worker
+/**
+ * Registro do Service Worker para PWA e Notificações Push
+ * O arquivo sw.js deve estar localizado na pasta /public
+ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // O caminho '/sw.js' assume que o arquivo está dentro da pasta 'public'
     navigator.serviceWorker
       .register('/sw.js')
-      .then((reg) => {
-        console.log('Service Worker registrado com sucesso! Escopo:', reg.scope);
+      .then((registration) => {
+        console.log('Service Worker registrado com sucesso! Escopo:', registration.scope);
       })
-      .catch((err) => {
-        console.error('Falha ao registrar o Service Worker:', err);
+      .catch((error) => {
+        console.error('Falha ao registrar o Service Worker:', error);
       });
   });
 }
