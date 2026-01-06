@@ -8,7 +8,7 @@ import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// PALETA DEFINIDA POR VOCÊ
+// PALETA PERSONALIZADA
 const MOOD_COLORS = {
   happy: '#b9fbc0',   // Verde Menta
   neutral: '#f5f5dc', // Bege Neutro
@@ -18,12 +18,18 @@ const MOOD_COLORS = {
 };
 
 export default function App() {
-  const [entries, setEntries] = useState(() => JSON.parse(localStorage.getItem('mindlog_v5')) || []);
+  const [entries, setEntries] = useState(() => JSON.parse(localStorage.getItem('mindlog_v6')) || []);
   const [search, setSearch] = useState('');
-  const [formData, setFormData] = useState({ situation: '', thoughts: '', mood: 'neutral' });
+  const [formData, setFormData] = useState({ 
+    situation: '', 
+    emotion: '', 
+    thoughts: '', 
+    behavior: '', 
+    mood: 'neutral' 
+  });
 
   useEffect(() => {
-    localStorage.setItem('mindlog_v5', JSON.stringify(entries));
+    localStorage.setItem('mindlog_v6', JSON.stringify(entries));
   }, [entries]);
 
   const handleSubmit = (e) => {
@@ -31,29 +37,34 @@ export default function App() {
     if (!formData.situation) return;
     const newEntry = { ...formData, id: Date.now(), date: new Date().toISOString() };
     setEntries([newEntry, ...entries]);
-    setFormData({ situation: '', thoughts: '', mood: 'neutral' });
+    setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("MINDLOG - REGISTROS", 14, 20);
+    const tableRows = entries.map(e => [
+      new Date(e.date).toLocaleDateString('pt-BR'),
+      e.mood.toUpperCase(),
+      e.situation,
+      e.emotion,
+      e.thoughts,
+      e.behavior
+    ]);
+    doc.autoTable({ 
+      head: [['DATA', 'HUMOR', 'SITUAÇÃO', 'EMOÇÃO', 'PENSAMENTO', 'COMPORTAMENTO']], 
+      body: tableRows, 
+      startY: 30,
+      styles: { fontSize: 7 }
+    });
+    doc.save("meu-diario.pdf");
   };
 
   const filteredEntries = entries.filter(e => 
     e.situation.toLowerCase().includes(search.toLowerCase()) || 
-    e.thoughts.toLowerCase().includes(search.toLowerCase())
+    e.thoughts.toLowerCase().includes(search.toLowerCase()) ||
+    e.emotion.toLowerCase().includes(search.toLowerCase())
   );
-
-  const chartData = {
-    labels: ['Feliz', 'Neutro', 'Triste', 'Ansioso', 'Bravo'],
-    datasets: [{
-      data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
-      backgroundColor: [
-        MOOD_COLORS.happy,
-        MOOD_COLORS.neutral,
-        MOOD_COLORS.sad,
-        MOOD_COLORS.anxious,
-        MOOD_COLORS.angry
-      ],
-      borderWidth: 0,
-      hoverOffset: 15
-    }]
-  };
 
   return (
     <div className="container">
@@ -67,21 +78,21 @@ export default function App() {
       <section className="card">
         <div className="chart-wrapper">
           <Doughnut 
-            data={chartData} 
-            options={{ 
-              maintainAspectRatio: false, 
-              plugins: { 
-                legend: { 
-                  position: 'bottom', 
-                  labels: { color: '#a1a1aa', usePointStyle: true, padding: 20, font: { size: 12 } } 
-                } 
-              } 
+            data={{
+              labels: ['Feliz', 'Neutro', 'Triste', 'Ansioso', 'Bravo'],
+              datasets: [{
+                data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
+                backgroundColor: Object.values(MOOD_COLORS),
+                borderWidth: 0
+              }]
             }} 
+            options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa' } } } }} 
           />
         </div>
       </section>
 
       <form className="card" onSubmit={handleSubmit}>
+        {/* 1. TOM */}
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
           <select 
@@ -97,22 +108,28 @@ export default function App() {
           </select>
         </div>
         
+        {/* 2. SITUAÇÃO */}
         <div className="form-group">
-          <label>O que houve?</label>
-          <textarea 
-            placeholder="Situação..." 
-            value={formData.situation} 
-            onChange={e => setFormData({...formData, situation: e.target.value})} 
-          />
+          <label>Situação</label>
+          <textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} />
+        </div>
+
+        {/* 3. EMOÇÃO */}
+        <div className="form-group">
+          <label>Emoção</label>
+          <textarea placeholder="O que você sentiu no corpo e na mente?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} />
         </div>
         
+        {/* 4. PENSAMENTO */}
         <div className="form-group">
-          <label>Pensamentos</label>
-          <textarea 
-            placeholder="O que pensou?" 
-            value={formData.thoughts} 
-            onChange={e => setFormData({...formData, thoughts: e.target.value})} 
-          />
+          <label>Pensamento</label>
+          <textarea placeholder="O que você pensou sobre isso?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} />
+        </div>
+
+        {/* 5. COMPORTAMENTO */}
+        <div className="form-group">
+          <label>Comportamento</label>
+          <textarea placeholder="O que você fez em seguida?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} />
         </div>
         
         <button type="submit" className="btn-primary">
@@ -125,6 +142,7 @@ export default function App() {
           <Search size={18} color="#a1a1aa" />
           <input placeholder="BUSCAR..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+        <button onClick={exportPDF} className="icon-btn"><Download size={22} /></button>
       </div>
 
       <div className="entries-list">
@@ -133,14 +151,16 @@ export default function App() {
             <div className="entry-header">
               <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
               <span>{new Date(e.date).toLocaleDateString()}</span>
-              <button onClick={() => setEntries(entries.filter(i => i.id !== e.id))} className="delete-btn">
-                <Trash2 size={18} />
-              </button>
+              <Trash2 size={18} onClick={() => setEntries(entries.filter(i => i.id !== e.id))} style={{cursor: 'pointer'}} />
             </div>
-            <div className="entry-section-title">Contexto</div>
+            <div className="entry-section-title">Situação</div>
             <div className="entry-text">{e.situation}</div>
-            <div className="entry-section-title">Reflexão</div>
+            <div className="entry-section-title">Emoção</div>
+            <div className="entry-text">{e.emotion}</div>
+            <div className="entry-section-title">Pensamento</div>
             <div className="entry-text">{e.thoughts}</div>
+            <div className="entry-section-title">Comportamento</div>
+            <div className="entry-text">{e.behavior}</div>
           </div>
         ))}
       </div>
