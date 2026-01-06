@@ -76,11 +76,11 @@ export default function App() {
             onChange={e => setFormData({...formData, mood: e.target.value})}
             style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}`, transition: '0.3s' }}
           >
-            <option value="happy">Feliz</option>
-            <option value="neutral">Calmo/Normal</option>
-            <option value="sad">Triste/Deprê</option>
-            <option value="anxious">Ansioso/Nervoso</option>
-            <option value="angry">Bravo/Altamente Estressado</option>
+            <option value="happy">Feliz </option>
+            <option value="neutral">Calmo/Normal </option>
+            <option value="sad">Triste/Deprê </option>
+            <option value="anxious">Ansioso/Nervoso </option>
+            <option value="angry">Bravo/Altamente Estressado </option>
           </select>
         </div>
         
