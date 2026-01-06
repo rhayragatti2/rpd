@@ -137,4 +137,38 @@ export default function App() {
         <div className="search-bar">
           <Search size={18} color="var(--text-muted)" />
           <input 
-            placeholder="FILTRAR REG
+            placeholder="FILTRAR REGISTROS..." 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+          />
+        </div>
+        <button onClick={exportPDF} className="icon-btn">
+          <Download size={22} />
+        </button>
+      </div>
+
+      {/* Lista de Entradas */}
+      <div className="entries-list">
+        {filteredEntries.map(e => (
+          <div key={e.id} className="entry-card" style={{ borderLeftColor: MOOD_COLORS[e.mood] }}>
+            <div className="entry-header">
+              <span style={{color: MOOD_COLORS[e.mood], fontWeight: '800', letterSpacing: '0.05em'}}>
+                {e.mood.toUpperCase()}
+              </span>
+              <span>{new Date(e.date).toLocaleDateString('pt-BR')} • {new Date(e.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>
+              <button onClick={() => deleteEntry(e.id)} className="delete-btn">
+                <Trash2 size={18} />
+              </button>
+            </div>
+            
+            <div className="entry-section-title">Contexto</div>
+            <div className="entry-text">{e.situation}</div>
+            
+            <div className="entry-section-title">Reflexão</div>
+            <div className="entry-text">{e.thoughts}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
