@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Meu Diário 🧠</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,94 +16,64 @@
 
     <style>
         :root {
-            --bg: #f1f5f9; --card-bg: #ffffff; --text: #1e293b; --text-muted: #64748b;
-            --primary: #6366f1; --border: #e2e8f0; --happy: #fde047; --sad: #93c5fd;
-            --angry: #fca5a5; --anxious: #c4b5fd; --neutral: #cbd5e1;
-        }
-
-        [data-theme="dark"] {
             --bg: #0f172a; --card-bg: #1e293b; --text: #f1f5f9; --text-muted: #94a3b8;
-            --border: #334155; --primary: #818cf8;
+            --primary: #818cf8; --border: #334155; 
+            --happy: #fde047; --sad: #93c5fd; --angry: #fca5a5; --anxious: #c4b5fd; --neutral: #cbd5e1;
         }
 
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg); color: var(--text);
-            margin: 0; padding: env(safe-area-inset-top) 15px 15px 15px; transition: 0.3s;
-        }
-
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
+        header { text-align: center; margin: 10px 0 20px 0; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); }
+        h3 { margin-top: 0; color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
-
-        .theme-toggle {
-            background: var(--card-bg); border: 1px solid var(--border);
-            color: var(--text); padding: 10px; border-radius: 50%; cursor: pointer;
+        /* Formulário no Topo */
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+        textarea, select, .search-input { 
+            width: 100%; padding: 12px; margin-top: 5px; border: 1px solid var(--border); 
+            border-radius: 10px; background: #0f172a; color: var(--text); 
+            box-sizing: border-box; font-size: 16px; line-height: 1.5;
         }
-
-        .card {
-            background: var(--card-bg); padding: 20px; border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-
-        .insight-badge {
-            display: inline-block; background: var(--primary); color: white;
-            padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin: 3px;
-        }
-
-        textarea, select, .search-input {
-            width: 100%; padding: 12px; margin-top: 5px;
-            border: 1px solid var(--border); border-radius: 8px;
-            background: var(--bg); color: var(--text);
-            box-sizing: border-box; font-family: inherit; font-size: 16px; /* Evita zoom no iOS */
-        }
-
-        button {
-            width: 100%; padding: 14px; border: none; border-radius: 12px;
-            font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px;
-        }
-
-        .btn-save { background: var(--primary); color: white; }
+        textarea::placeholder { color: #4b5563; font-size: 0.9rem; }
+        
+        button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-save { background: var(--primary); color: white; margin-bottom: 5px; }
+        .btn-save:active { transform: scale(0.98); }
         .btn-pdf { background: #10b981; color: white; margin-bottom: 20px; }
 
-        .chart-container { height: 200px; margin-bottom: 10px; }
-
-        .filters { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn {
-            background: var(--card-bg); border: 1px solid var(--border); padding: 6px 15px;
-            border-radius: 20px; white-space: nowrap; font-size: 0.8rem; color: var(--text);
+        /* Calendário e Gráfico */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .calendar-day-name { font-size: 0.7rem; color: var(--text-muted); font-weight: bold; }
+        .calendar-day { 
+            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.8rem; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.03);
         }
+        .calendar-day.today { border: 1px solid var(--primary); }
+        .mood-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; }
+        .btn-nav { background: none; border: 1px solid var(--border); color: var(--text); padding: 5px 12px; width: auto; font-size: 0.8rem; }
+        
+        .insight-badge { display: inline-block; background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin: 3px; }
+        .chart-container { height: 160px; margin-top: 10px; }
+        .filters { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; }
+        .filter-btn { background: var(--card-bg); border: 1px solid var(--border); padding: 8px 18px; border-radius: 20px; color: var(--text); font-size: 0.8rem; }
         .filter-btn.active { background: var(--primary); color: white; }
 
-        .entry {
-            border-left: 8px solid; padding: 15px; background: var(--card-bg);
-            border-radius: 12px; margin-bottom: 12px; position: relative;
-            border: 1px solid var(--border); border-left-width: 8px;
-        }
-        .entry-title { font-weight: bold; font-size: 0.75rem; color: var(--primary); margin-top: 8px; text-transform: uppercase; }
-        .entry-text { font-size: 0.95rem; margin-bottom: 5px; }
-        
-        .delete-btn { position: absolute; top: 10px; right: 10px; color: #ef4444; background: none; font-size: 0.7rem; width: auto; }
+        /* Lista de Entradas */
+        .entry { border-left: 6px solid; padding: 15px; background: var(--card-bg); border-radius: 12px; margin-bottom: 12px; position: relative; border-top: 1px solid var(--border); }
+        .entry-title { font-weight: bold; font-size: 0.7rem; color: var(--primary); margin-top: 10px; text-transform: uppercase; }
+        .entry-text { font-size: 0.95rem; margin-top: 2px; color: var(--text); }
+        .delete-btn { position: absolute; top: 12px; right: 12px; color: #ef4444; background: none; font-size: 0.7rem; width: auto; opacity: 0.6; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-row">
-        <h1>Meu Diário 🧠</h1>
-        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
-    </div>
-
-    <div class="card">
-        <h3>Insights de Gatilhos</h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted)">Palavras frequentes em momentos difíceis:</p>
-        <div id="triggerWords"></div>
-        <div class="chart-container"><canvas id="moodChart"></canvas></div>
-    </div>
+    <header><h1>Meu Diário 🧠</h1></header>
 
     <div class="card">
         <h3>Novo Registro</h3>
+        <label>Qual o seu humor agora?</label>
         <select id="mood">
             <option value="happy">😊 Feliz / Radiante</option>
             <option value="neutral">😐 Neutro / Calmo</option>
@@ -111,24 +81,45 @@
             <option value="anxious">😰 Ansioso / Preocupado</option>
             <option value="angry">😠 Irritado / Bravo</option>
         </select>
-        <label>Situação</label><textarea id="situation" rows="2" placeholder="O que houve?"></textarea>
-        <label>Emoções</label><textarea id="emotions" rows="2"></textarea>
-        <label>Pensamentos</label><textarea id="thoughts" rows="2"></textarea>
-        <label>Comportamentos</label><textarea id="behavior" rows="2"></textarea>
+
+        <label>Situação</label>
+        <textarea id="situation" rows="2" placeholder="O que aconteceu?..."></textarea>
+
+        <label>Emoções/Sentimentos</label>
+        <textarea id="emotions" rows="2" placeholder="O que você sentiu no momento?..."></textarea>
+
+        <label>Pensamentos</label>
+        <textarea id="thoughts" rows="2" placeholder="O que passou pela sua cabeça?..."></textarea>
+
+        <label>Comportamentos</label>
+        <textarea id="behavior" rows="2" placeholder="O que você fez na hora?..."></textarea>
+
         <button class="btn-save" onclick="saveEntry()">Salvar no Diário</button>
     </div>
 
-    <button class="btn-pdf" onclick="exportPDF()">📄 Exportar PDF Completo</button>
-
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar registros..." oninput="render()">
+    <div class="card">
+        <h3>Insights e Estatísticas</h3>
+        <div id="triggerWords" style="margin-bottom: 10px;"></div>
+        <div class="chart-container"><canvas id="moodChart"></canvas></div>
     </div>
+
+    <div class="card">
+        <div class="calendar-header">
+            <button class="btn-nav" onclick="changeMonth(-1)">◀</button>
+            <h3 id="monthDisplay" style="margin:0">Mês</h3>
+            <button class="btn-nav" onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <button class="btn-pdf" onclick="exportPDF()">📄 Gerar PDF Consolidado</button>
+    
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Pesquisar registros..." oninput="render()" style="margin-bottom:15px">
 
     <div class="filters">
         <button class="filter-btn active" onclick="updateView('all', this)">Tudo</button>
         <button class="filter-btn" onclick="updateView('day', this)">Hoje</button>
-        <button class="filter-btn" onclick="updateView('week', this)">Semana</button>
-        <button class="filter-btn" onclick="updateView('month', this)">Mês</button>
+        <button class="filter-btn" onclick="updateView('week', this)">Esta Semana</button>
     </div>
 
     <div id="entriesList"></div>
@@ -138,24 +129,10 @@
     let entries = JSON.parse(localStorage.getItem('thought_diary')) || [];
     let myChart;
     let currentFilter = 'all';
+    let calendarDate = new Date();
 
     const moodColors = { happy: '#fde047', neutral: '#cbd5e1', sad: '#93c5fd', anxious: '#c4b5fd', angry: '#fca5a5' };
     const moodLabels = { happy: 'Feliz', neutral: 'Neutro', sad: 'Triste', anxious: 'Ansioso', angry: 'Irritado' };
-
-    function toggleTheme() {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-        document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️' : '🌙';
-        if(myChart) render();
-    }
-
-    // Carregar tema
-    if(localStorage.getItem('theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('themeBtn').innerText = '☀️';
-    }
 
     function saveEntry() {
         const entry = {
@@ -167,55 +144,38 @@
             thoughts: document.getElementById('thoughts').value,
             behavior: document.getElementById('behavior').value
         };
-        if(!entry.situation) return alert("Descreva a situação.");
+        if(!entry.situation) return alert("Por favor, preencha a situação.");
         entries.unshift(entry);
         localStorage.setItem('thought_diary', JSON.stringify(entries));
         document.querySelectorAll('textarea').forEach(t => t.value = '');
         render();
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Volta ao topo ao salvar
     }
 
-    function deleteEntry(id) {
-        if(confirm("Excluir registro?")) {
-            entries = entries.filter(e => e.id !== id);
-            localStorage.setItem('thought_diary', JSON.stringify(entries));
-            render();
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const monthDisplay = document.getElementById('monthDisplay');
+        grid.innerHTML = '';
+        const year = calendarDate.getFullYear();
+        const month = calendarDate.getMonth();
+        monthDisplay.innerText = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(calendarDate);
+
+        ['D','S','T','Q','Q','S','S'].forEach(d => grid.innerHTML += `<div class="calendar-day-name">${d}</div>`);
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
+        for(let d=1; d<=daysInMonth; d++) {
+            const dateStr = new Date(year, month, d).toDateString();
+            const dayEntries = entries.filter(e => new Date(e.date).toDateString() === dateStr);
+            const lastMood = dayEntries.length ? dayEntries[0].mood : null;
+            const isToday = new Date().toDateString() === dateStr ? 'today' : '';
+            grid.innerHTML += `<div class="calendar-day ${isToday}" onclick="filterByDate('${dateStr}')">${d}${lastMood ? `<div class="mood-dot" style="background:${moodColors[lastMood]}"></div>` : ''}</div>`;
         }
     }
 
-    function calculateTriggers() {
-        const negativeMoods = ['sad', 'anxious', 'angry'];
-        let textBlob = "";
-        entries.filter(e => negativeMoods.includes(e.mood)).forEach(e => {
-            textBlob += ` ${e.situation} ${e.thoughts} ${e.emotions}`;
-        });
-
-        const words = textBlob.toLowerCase().match(/\b(\w{5,})\b/g) || []; // Palavras com mais de 5 letras
-        const counts = {};
-        words.forEach(w => { if(!['porque','quando','muito','estou'].includes(w)) counts[w] = (counts[w] || 0) + 1; });
-
-        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        const container = document.getElementById('triggerWords');
-        container.innerHTML = sorted.length ? '' : '<span style="font-size:0.7rem">Ainda sem dados suficientes...</span>';
-        sorted.forEach(([word, count]) => {
-            container.innerHTML += `<span class="insight-badge">${word} (${count}x)</span>`;
-        });
-    }
-
-    function initChart() {
-        const ctx = document.getElementById('moodChart').getContext('2d');
-        const counts = { happy: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 };
-        entries.forEach(e => counts[e.mood]++);
-        if(myChart) myChart.destroy();
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: Object.values(moodLabels),
-                datasets: [{ data: Object.values(counts), backgroundColor: Object.values(moodColors), borderWidth: 0 }]
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: isDark ? '#f1f5f9' : '#1e293b', font: { size: 10 } } } } }
-        });
-    }
+    function changeMonth(step) { calendarDate.setMonth(calendarDate.getMonth() + step); renderCalendar(); }
+    function filterByDate(dateStr) { document.getElementById('searchInput').value = ""; currentFilter = dateStr; render(); }
 
     function render() {
         const list = document.getElementById('entriesList');
@@ -226,11 +186,10 @@
         const filtered = entries.filter(e => {
             const d = new Date(e.date);
             const matchesSearch = e.situation.toLowerCase().includes(searchTerm) || e.thoughts.toLowerCase().includes(searchTerm);
-            let matchesFilter = true;
-            if(currentFilter === 'day') matchesFilter = d.toDateString() === now.toDateString();
-            if(currentFilter === 'week') matchesFilter = (now - d) / (1000 * 60 * 60 * 24) <= 7;
-            if(currentFilter === 'month') matchesFilter = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            return matchesSearch && matchesFilter;
+            if(currentFilter === 'all') return matchesSearch;
+            if(currentFilter === 'day') return d.toDateString() === now.toDateString() && matchesSearch;
+            if(currentFilter === 'week') return (now - d) / 86400000 <= 7 && matchesSearch;
+            return d.toDateString() === currentFilter && matchesSearch;
         });
 
         filtered.forEach(e => {
@@ -239,14 +198,38 @@
             div.style.borderLeftColor = moodColors[e.mood];
             div.innerHTML = `
                 <button class="delete-btn" onclick="deleteEntry(${e.id})">Apagar</button>
-                <div class="entry-date">${new Date(e.date).toLocaleString('pt-BR')}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">${new Date(e.date).toLocaleString('pt-BR')}</div>
                 <div class="entry-title">Situação</div><div class="entry-text">${e.situation}</div>
                 <div class="entry-title">Pensamentos</div><div class="entry-text">${e.thoughts}</div>
             `;
             list.appendChild(div);
         });
         initChart();
+        renderCalendar();
         calculateTriggers();
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        const counts = { happy: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 };
+        entries.forEach(e => counts[e.mood]++);
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: Object.values(moodLabels), datasets: [{ data: Object.values(counts), backgroundColor: Object.values(moodColors), borderWidth: 0 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#f1f5f9', font: { size: 10 } } } } }
+        });
+    }
+
+    function calculateTriggers() {
+        const negativeMoods = ['sad', 'anxious', 'angry'];
+        let textBlob = "";
+        entries.filter(e => negativeMoods.includes(e.mood)).forEach(e => textBlob += ` ${e.situation} ${e.thoughts}`);
+        const words = textBlob.toLowerCase().match(/\b(\w{5,})\b/g) || [];
+        const counts = {};
+        words.forEach(w => { if(!['porque','quando','muito','estou'].includes(w)) counts[w] = (counts[w] || 0) + 1; });
+        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+        document.getElementById('triggerWords').innerHTML = sorted.map(([w, c]) => `<span class="insight-badge">${w} (${c})</span>`).join('');
     }
 
     function updateView(type, btn) {
@@ -256,13 +239,17 @@
         render();
     }
 
+    function deleteEntry(id) {
+        if(confirm("Apagar registro?")) { entries = entries.filter(e => e.id !== id); localStorage.setItem('thought_diary', JSON.stringify(entries)); render(); }
+    }
+
     async function exportPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("Relatorio de Pensamentos - RPD", 14, 15);
+        doc.text("Meu Diário de Pensamentos", 14, 15);
         const rows = entries.map(e => [new Date(e.date).toLocaleDateString('pt-BR'), moodLabels[e.mood], e.situation, e.thoughts]);
-        doc.autoTable({ head: [['Data', 'Humor', 'Situacao', 'Pensamentos']], body: rows, startY: 25, styles: { fontSize: 8 } });
-        doc.save("meu-diario.pdf");
+        doc.autoTable({ head: [['Data', 'Humor', 'Situação', 'Pensamentos']], body: rows, startY: 20, styles: { fontSize: 8 } });
+        doc.save("diario-digital.pdf");
     }
 
     render();
