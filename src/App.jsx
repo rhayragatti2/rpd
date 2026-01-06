@@ -8,7 +8,7 @@ import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Sua Paleta Personalizada
+// PALETA DEFINIDA POR VOCÊ
 const MOOD_COLORS = {
   happy: '#b9fbc0',   // Verde Menta
   neutral: '#f5f5dc', // Bege Neutro
@@ -18,12 +18,12 @@ const MOOD_COLORS = {
 };
 
 export default function App() {
-  const [entries, setEntries] = useState(() => JSON.parse(localStorage.getItem('mindlog_v4')) || []);
+  const [entries, setEntries] = useState(() => JSON.parse(localStorage.getItem('mindlog_v5')) || []);
   const [search, setSearch] = useState('');
   const [formData, setFormData] = useState({ situation: '', thoughts: '', mood: 'neutral' });
 
   useEffect(() => {
-    localStorage.setItem('mindlog_v4', JSON.stringify(entries));
+    localStorage.setItem('mindlog_v5', JSON.stringify(entries));
   }, [entries]);
 
   const handleSubmit = (e) => {
@@ -34,33 +34,26 @@ export default function App() {
     setFormData({ situation: '', thoughts: '', mood: 'neutral' });
   };
 
-  const deleteEntry = (id) => {
-    if (confirm("Deseja apagar este registro?")) setEntries(entries.filter(e => e.id !== id));
-  };
-
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("MINDLOG - Histórico de Pensamentos", 14, 20);
-    const tableRows = entries.map(e => [
-      new Date(e.date).toLocaleDateString('pt-BR'),
-      e.mood.toUpperCase(), 
-      e.situation, 
-      e.thoughts
-    ]);
-    doc.autoTable({ 
-      head: [['DATA', 'HUMOR', 'SITUAÇÃO', 'PENSAMENTOS']], 
-      body: tableRows, 
-      startY: 30,
-      styles: { fontSize: 9 }
-    });
-    doc.save("meu-diario-mental.pdf");
-  };
-
   const filteredEntries = entries.filter(e => 
     e.situation.toLowerCase().includes(search.toLowerCase()) || 
     e.thoughts.toLowerCase().includes(search.toLowerCase())
   );
+
+  const chartData = {
+    labels: ['Feliz', 'Neutro', 'Triste', 'Ansioso', 'Bravo'],
+    datasets: [{
+      data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
+      backgroundColor: [
+        MOOD_COLORS.happy,
+        MOOD_COLORS.neutral,
+        MOOD_COLORS.sad,
+        MOOD_COLORS.anxious,
+        MOOD_COLORS.angry
+      ],
+      borderWidth: 0,
+      hoverOffset: 15
+    }]
+  };
 
   return (
     <div className="container">
@@ -71,35 +64,30 @@ export default function App() {
         <h1>MINDLOG</h1>
       </header>
 
-      {/* Gráfico de Distribuição */}
       <section className="card">
-        <div className="chart-wrapper" style={{height: '220px'}}>
+        <div className="chart-wrapper">
           <Doughnut 
-            data={{
-              labels: ['Feliz', 'Neutro', 'Triste', 'Ansioso', 'Bravo'],
-              datasets: [{
-                data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
-                backgroundColor: Object.values(MOOD_COLORS),
-                borderWidth: 0,
-                hoverOffset: 12
-              }]
-            }} 
+            data={chartData} 
             options={{ 
-                maintainAspectRatio: false, 
-                plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', usePointStyle: true, padding: 20, font: { size: 11 } } } } 
+              maintainAspectRatio: false, 
+              plugins: { 
+                legend: { 
+                  position: 'bottom', 
+                  labels: { color: '#a1a1aa', usePointStyle: true, padding: 20, font: { size: 12 } } 
+                } 
+              } 
             }} 
           />
         </div>
       </section>
 
-      {/* Formulário de Registro com Labels Padronizadas e Espaçamento Corrigido */}
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
           <select 
             value={formData.mood} 
             onChange={e => setFormData({...formData, mood: e.target.value})}
-            style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}`, transition: '0.3s' }}
+            style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}
           >
             <option value="happy">Verde Menta (Feliz)</option>
             <option value="neutral">Bege Neutro (Calmo)</option>
@@ -112,7 +100,7 @@ export default function App() {
         <div className="form-group">
           <label>O que houve?</label>
           <textarea 
-            placeholder="Descreva a situação..." 
+            placeholder="Situação..." 
             value={formData.situation} 
             onChange={e => setFormData({...formData, situation: e.target.value})} 
           />
@@ -121,7 +109,7 @@ export default function App() {
         <div className="form-group">
           <label>Pensamentos</label>
           <textarea 
-            placeholder="O que passou pela sua cabeça?" 
+            placeholder="O que pensou?" 
             value={formData.thoughts} 
             onChange={e => setFormData({...formData, thoughts: e.target.value})} 
           />
@@ -132,38 +120,25 @@ export default function App() {
         </button>
       </form>
 
-      {/* Barra de Busca e Ações */}
       <div className="actions-row">
         <div className="search-bar">
-          <Search size={18} color="var(--text-muted)" />
-          <input 
-            placeholder="FILTRAR REGISTROS..." 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-          />
+          <Search size={18} color="#a1a1aa" />
+          <input placeholder="BUSCAR..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button onClick={exportPDF} className="icon-btn">
-          <Download size={22} />
-        </button>
       </div>
 
-      {/* Lista de Entradas */}
       <div className="entries-list">
         {filteredEntries.map(e => (
-          <div key={e.id} className="entry-card" style={{ borderLeftColor: MOOD_COLORS[e.mood] }}>
+          <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
             <div className="entry-header">
-              <span style={{color: MOOD_COLORS[e.mood], fontWeight: '800', letterSpacing: '0.05em'}}>
-                {e.mood.toUpperCase()}
-              </span>
-              <span>{new Date(e.date).toLocaleDateString('pt-BR')} • {new Date(e.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>
-              <button onClick={() => deleteEntry(e.id)} className="delete-btn">
+              <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
+              <span>{new Date(e.date).toLocaleDateString()}</span>
+              <button onClick={() => setEntries(entries.filter(i => i.id !== e.id))} className="delete-btn">
                 <Trash2 size={18} />
               </button>
             </div>
-            
             <div className="entry-section-title">Contexto</div>
             <div className="entry-text">{e.situation}</div>
-            
             <div className="entry-section-title">Reflexão</div>
             <div className="entry-text">{e.thoughts}</div>
           </div>
