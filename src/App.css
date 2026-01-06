@@ -114,3 +114,90 @@ textarea { min-height: 80px; resize: none; } /* Reduzi um pouco a altura para ca
 .entry-section-title { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-top: 15px; letter-spacing: 0.05em; }
 
 .entry-text { margin-top: 4px; line-height: 1.5; color: #e4e4e7; font-size: 0.95rem; }
+
+/* Nova Seção de Busca */
+.search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.search-bar-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 56px; /* Altura fixa para alinhar com o botão */
+}
+
+.search-input-wrapper input {
+  border: none;
+  background: transparent;
+  padding: 14px;
+  color: #fff;
+  width: 100%;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+/* Botão de Download Moderno */
+.download-btn-modern {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.download-btn-modern:hover {
+  background: var(--card-border);
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+}
+
+/* Filtros por Tom (Chips) */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.chip {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.chip.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none; /* Esconde scroll no mobile */
+}
