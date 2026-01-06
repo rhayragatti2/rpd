@@ -1,37 +1,214 @@
-/* Padronização das Labels */
+:root {
+  --bg: #0c0c0e;
+  --card: #18181b;
+  --card-border: #27272a;
+  --text: #ffffff;
+  --text-muted: #a1a1aa;
+  --success: #10b981; 
+  
+  /* Paleta Personalizada */
+  --mood-happy: #b9fbc0;   /* Verde Menta */
+  --mood-neutral: #f5f5dc;  /* Bege Neutro */
+  --mood-sad: #a2d2ff;     /* Azul Pastel */
+  --mood-anxious: #e0dbff;   /* Lavanda Clarinho */
+  --mood-angry: #ff7f7f;     /* Coral Melancia */
+}
+
+body { 
+  background-color: var(--bg); 
+  color: var(--text); 
+  margin: 0; 
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container { 
+  max-width: 550px; 
+  margin: 0 auto; 
+  padding: 20px 20px 80px 20px; 
+}
+
+/* Header */
+.header { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  padding: 40px 0; 
+  gap: 12px; 
+}
+
+.logo-icon {
+  background: var(--card);
+  padding: 15px;
+  border-radius: 22px;
+  border: 2px solid;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header h1 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  margin: 0;
+  color: var(--text);
+}
+
+/* Cards */
+.card { 
+  background: var(--card); 
+  border-radius: 24px; 
+  padding: 24px; 
+  border: 1px solid var(--card-border); 
+  margin-bottom: 24px;
+}
+
+/* Labels Padronizadas (Uppercase + Espaçamento) */
 .form-group label {
   display: block;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted);
-  
-  /* Padronização conforme a primeira label da imagem */
   text-transform: uppercase; 
-  letter-spacing: 0.1em; 
-  
-  /* Aumento do espaçamento inferior para não sufocar o input */
-  margin-bottom: 12px; 
+  letter-spacing: 0.12em; 
+  margin-bottom: 12px; /* Espaço entre label e o input */
 }
 
-/* Ajuste de espaçamento entre os campos */
-.card form > div, 
-.card form > label,
-.card form > textarea,
-.card form > select {
-  /* Adiciona uma margem consistente no final de cada bloco de input */
-  margin-bottom: 24px; 
+/* Espaçamento entre os blocos de input */
+.form-group {
+  margin-bottom: 28px; 
 }
 
-/* Remove a margem do último elemento para não sobrar espaço no card */
-.card form > *:last-child {
-  margin-bottom: 0;
+.form-group:last-of-type {
+  margin-bottom: 20px;
 }
 
-/* Textareas Responsivos */
-textarea {
-  min-height: 110px;
-  line-height: 1.6;
-  padding: 16px;
-  width: 100%;
+/* Inputs e Textareas */
+select, input, textarea { 
+  width: 100%; 
+  padding: 16px; 
+  border-radius: 14px; 
+  border: 1px solid var(--card-border); 
+  background: #000000; 
+  color: var(--text); 
+  font-size: 16px; 
   box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+textarea { 
+  min-height: 120px; 
+  resize: none; 
+  line-height: 1.6;
+}
+
+select:focus, textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--success);
+}
+
+/* Botão de Sucesso */
+.btn-primary { 
+  background: var(--success); 
+  color: #fff; 
+  border: none; 
+  padding: 18px; 
+  border-radius: 16px; 
+  width: 100%; 
+  cursor: pointer; 
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Ações e Busca */
+.actions-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-bar {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.search-bar input {
+  border: none;
+  background: transparent;
+  padding: 14px 10px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  padding: 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Timeline de Registros */
+.entry-card { 
+  background: var(--card); 
+  padding: 24px; 
+  border-radius: 22px; 
+  border: 1px solid var(--card-border); 
+  margin-bottom: 16px;
+  border-left-width: 6px;
+  transition: transform 0.2s ease;
+}
+
+.entry-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  margin-bottom: 20px; 
+  font-size: 0.75rem; 
+  color: var(--text-muted); 
+}
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+}
+
+.delete-btn:hover {
+  color: var(--mood-angry);
+}
+
+.entry-section-title { 
+  font-size: 0.65rem; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  letter-spacing: 0.1em;
+  margin-top: 18px; 
+  color: var(--text-muted); 
+}
+
+.entry-text { 
+  font-size: 1rem; 
+  line-height: 1.6; 
+  margin-top: 6px; 
+  color: #e4e4e7;
 }
