@@ -20,6 +20,43 @@ export default function App() {
   const [formData, setFormData] = useState({ situation: '', emotions: '', thoughts: '', behavior: '', mood: 'neutral' });
 
   useEffect(() => {
+  // 1. Pedir permissão ao carregar o app
+  const requestPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  };
+  requestPermission();
+
+  // 2. Lógica de verificação do horário (21h)
+  const timer = setInterval(() => {
+    const agora = new Date();
+    const horas = agora.getHours();
+    const minutos = agora.getMinutes();
+
+    // Se for 21:00 (e segundos baixos para não repetir no mesmo minuto)
+    if (horas === 21 && minutos === 0 && agora.getSeconds() < 10) {
+      enviarNotificacao();
+    }
+  }, 10000); // Verifica a cada 10 segundos
+
+  return () => clearInterval(timer);
+}, []);
+
+// Função para disparar o alerta via Service Worker
+const enviarNotificacao = () => {
+  if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: 'Hora do seu Diário 🧠',
+        body: 'Como foi o seu dia? Reserve 2 minutos para registrar seus pensamentos.'
+      });
+    });
+  }
+};
+
+  useEffect(() => {
     localStorage.setItem('diary_v2', JSON.stringify(entries));
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
