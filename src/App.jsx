@@ -76,11 +76,11 @@ export default function App() {
             onChange={e => setFormData({...formData, mood: e.target.value})}
             style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}`, transition: '0.3s' }}
           >
-            <option value="happy">Verde Menta (Feliz)</option>
-            <option value="neutral">Bege Neutro (Calmo)</option>
-            <option value="sad">Azul Pastel (Triste)</option>
-            <option value="anxious">Lavanda Clarinho (Ansioso)</option>
-            <option value="angry">Coral Melancia (Bravo)</option>
+            <option value="happy">Feliz</option>
+            <option value="neutral">Calmo/Normal</option>
+            <option value="sad">Triste/Deprê</option>
+            <option value="anxious">Ansioso/Nervoso</option>
+            <option value="angry">Bravo/Altamente Estressado</option>
           </select>
         </div>
         
@@ -91,7 +91,7 @@ export default function App() {
         <textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} />
         
         <button type="submit" className="btn-primary">
-          <CheckCircle2 size={22} /> SALVAR NO DIÁRIO
+          <CheckCircle2 size={22} /> SALVAR NO REGISTRO
         </button>
       </form>
 
