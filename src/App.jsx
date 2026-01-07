@@ -35,145 +35,63 @@ const MOOD_LABELS = {
 
 export default function App() {
   const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
   const [view, setView] = useState('journal'); 
-  const [userName, setUserName] = useState(localStorage.getItem('ml_name') || '');
   const [search, setSearch] = useState('');
-  const [filterMood, setFilterMood] = useState('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [dateType, setDateType] = useState('hoje'); 
-  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
-
-  const [formData, setFormData] = useState({ 
-    situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' 
-  });
+  const [formData, setFormData] = useState({ situation: '', thoughts: '', mood: 'neutral' });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchEntries();
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchEntries();
-    });
-    return () => subscription.unsubscribe();
   }, []);
 
   async function fetchEntries() {
-    setLoading(true);
     const { data, error } = await supabase.from('entries').select('*').order('date', { ascending: false });
     if (!error) setEntries(data);
-    setLoading(false);
   }
-
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    let result = isRegistering 
-      ? await supabase.auth.signUp({ email, password }) 
-      : await supabase.auth.signInWithPassword({ email, password });
-    if (result.error) alert(result.error.message);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setEntries([]);
-    setView('journal');
-  };
-
-  const saveProfile = () => {
-    localStorage.setItem('ml_name', userName);
-    alert("Perfil atualizado!");
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.situation) return;
-    let finalDate = new Date();
-    if (dateType === 'ontem') finalDate.setDate(finalDate.getDate() - 1);
-    else if (dateType === 'outro') finalDate = new Date(customDate + "T12:00:00");
-
-    const { error } = await supabase.from('entries').insert([{ ...formData, date: finalDate.toISOString(), user_id: user.id }]);
-    if (error) alert("Erro ao salvar: " + error.message);
-    else {
-      setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
-      setDateType('hoje');
+    const { error } = await supabase.from('entries').insert([{ ...formData, date: new Date().toISOString(), user_id: user.id }]);
+    if (!error) {
+      setFormData({ situation: '', thoughts: '', mood: 'neutral' });
       fetchEntries();
     }
   };
 
-  const deleteEntry = async (id) => {
-    if (window.confirm("Excluir registro permanentemente?")) {
-      const { error } = await supabase.from('entries').delete().eq('id', id);
-      if (!error) fetchEntries();
-    }
+  // Lógica do Calendário
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const days = new Date(year, month + 1, 0).getDate();
+    return { firstDay, days };
   };
 
-  const exportPDF = () => {
-    const doc = new jsPDF('l', 'mm', 'a4'); 
-    const nomeRelatorio = userName ? userName.toUpperCase() : 'USUÁRIO';
-    doc.setFontSize(18);
-    doc.text(`MINDLOG - HISTÓRICO DE REGISTROS: ${nomeRelatorio}`, 14, 15);
-    const tableRows = entries.map(e => [
-      new Date(e.date).toLocaleDateString('pt-BR'),
-      MOOD_LABELS[e.mood].toUpperCase(),
-      e.situation, e.emotion || '—', e.thoughts, e.behavior || '—'
-    ]);
-    doc.autoTable({
-      head: [['DATA', 'TOM', 'SITUAÇÃO', 'EMOÇÃO', 'PENSAMENTO', 'COMPORTAMENTO']],
-      body: tableRows,
-      startY: 25,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 45, 48] }
+  const { firstDay, days } = getDaysInMonth(currentMonth);
+  const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let i = 1; i <= days; i++) calendarDays.push(i);
+
+  const getDayMoodColor = (day) => {
+    if (!day) return null;
+    const entry = entries.find(e => {
+      const d = new Date(e.date);
+      return d.getDate() === day && d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
     });
-    doc.save(`mindlog-registros-${nomeRelatorio.toLowerCase()}.pdf`);
+    return entry ? MOOD_COLORS[entry.mood] : null;
   };
 
-  const filteredEntries = entries.filter(e => {
-    const matchesSearch = e.situation.toLowerCase().includes(search.toLowerCase()) || e.thoughts.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch && (filterMood === 'all' || e.mood === filterMood);
-  });
+  const filteredEntries = entries.filter(e => 
+    e.situation.toLowerCase().includes(search.toLowerCase()) || 
+    e.thoughts.toLowerCase().includes(search.toLowerCase())
+  );
 
-  if (!user) {
-    return (
-      <div className="container login-screen">
-        <header className="header">
-          <div className="logo-icon" style={{ borderColor: '#fff' }}><BrainCircuit size={42} /></div>
-          <h1>MINDLOG</h1>
-        </header>
-        <form className="card auth-card" onSubmit={handleAuth}>
-          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR REGISTROS'}</h2>
-          <div className="form-group">
-            <div className="search-input-wrapper">
-              <Mail size={18} color="#a1a1aa" />
-              <input type="email" placeholder="E-MAIL" value={email} onChange={e => setEmail(e.target.value)} required />
-            </div>
-          </div>
-          <div className="form-group">
-            <div className="search-input-wrapper">
-              <Lock size={18} color="#a1a1aa" />
-              <input type={showPassword ? "text" : "password"} placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} required />
-              <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </div>
-            </div>
-          </div>
-          <button type="submit" className="btn-primary">
-            {isRegistering ? <UserPlus size={20}/> : <LogIn size={20}/>} 
-            {isRegistering ? 'CADASTRAR' : 'ENTRAR'}
-          </button>
-          <p className="toggle-auth" onClick={() => setIsRegistering(!isRegistering)}>
-            {isRegistering ? 'Já tem conta? Entre aqui' : 'Não tem conta? Cadastre-se'}
-          </p>
-        </form>
-      </div>
-    );
-  }
+  if (!user) return <div className="container">Carregando...</div>;
 
   return (
     <div className="container">
@@ -187,64 +105,55 @@ export default function App() {
       </nav>
 
       <header className="header">
-        <div className="logo-icon" style={{ borderColor: view === 'journal' ? MOOD_COLORS[formData.mood] : '#a1a1aa' }}><BrainCircuit size={42} /></div>
+        <div className="logo-icon"><BrainCircuit size={42} /></div>
         <h1>MINDLOG</h1>
-        {userName && <p className="welcome-text">Olá, {userName}</p>}
       </header>
 
-      {view === 'profile' ? (
-        <section className="card">
-          <h2>MEU PERFIL</h2>
-          <div className="form-group"><label>Nome</label><input type="text" value={userName} onChange={e => setUserName(e.target.value)} /></div>
-          <div className="form-group"><label>E-mail</label><div className="search-input-wrapper readonly"><Mail size={18}/><input value={user.email} readOnly /></div></div>
-          <button className="btn-primary" onClick={saveProfile}><Save size={20} /> SALVAR ALTERAÇÕES</button>
-          <button className="btn-secondary" onClick={handleLogout} style={{marginTop: '10px'}}><LogOut size={20} /> SAIR DA CONTA</button>
-        </section>
-      ) : (
+      {view === 'journal' && (
         <>
-          <section className="card">
-            <div className="chart-wrapper">
-              <Doughnut data={{
-                labels: Object.values(MOOD_LABELS),
-                datasets: [{
-                  data: Object.keys(MOOD_LABELS).map(m => entries.filter(e => e.mood === m).length),
-                  backgroundColor: Object.values(MOOD_COLORS), borderWidth: 0
-                }]
-              }} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa' } } } }} />
-            </div>
-          </section>
-
           <form className="card" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Qual o seu tom agora?</label>
+              <label>Como você está?</label>
               <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})}>
                 {Object.keys(MOOD_LABELS).map(key => <option key={key} value={key}>{MOOD_LABELS[key]}</option>)}
               </select>
             </div>
-            <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
-            <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
-            
-            <div className="form-group">
-              <label>Quando aconteceu?</label>
-              <div className="date-chips">
-                {['hoje', 'ontem', 'outro'].map(t => (
-                  <button key={t} type="button" className={dateType === t ? 'chip active' : 'chip'} onClick={() => setDateType(t)}>{t.toUpperCase()}</button>
-                ))}
-              </div>
-            </div>
-            <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR REGISTRO</button>
+            <textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} />
+            <button type="submit" className="btn-primary" style={{marginTop: '10px'}}><CheckCircle2 size={20} /> SALVAR REGISTRO</button>
           </form>
 
+          {/* VISÃO MENSAL DE CALENDÁRIO */}
+          <section className="card">
+            <div className="calendar-header">
+              <button className="nav-btn" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
+                <ChevronLeft size={20} />
+              </button>
+              <h2>{new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(currentMonth).toUpperCase()}</h2>
+              <button className="nav-btn" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
+                <ChevronRight size={20} />
+              </button>
+            </div>
+            <div className="calendar-grid">
+              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
+              {calendarDays.map((day, i) => {
+                const color = getDayMoodColor(day);
+                return (
+                  <div key={i} className="day-dot" style={color ? { backgroundColor: color, color: '#000', fontWeight: 'bold' } : {}}>
+                    {day}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* BUSCA E FILTROS */}
           <div className="search-section">
             <div className="search-bar-container">
-              <div className="search-input-wrapper"><Search size={18} /><input placeholder="BUSCAR REGISTROS..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-              <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
-            </div>
-            <div className="filter-chips">
-              <button className={filterMood === 'all' ? 'chip active' : 'chip'} onClick={() => setFilterMood('all')}>TODOS</button>
-              {Object.keys(MOOD_COLORS).map(m => (
-                <button key={m} className={filterMood === m ? 'chip active' : 'chip'} onClick={() => setFilterMood(m)}>{MOOD_LABELS[m].split('/')[0].toUpperCase()}</button>
-              ))}
+              <div className="search-input-wrapper">
+                <Search size={18} />
+                <input placeholder="BUSCAR REGISTROS..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <button className="download-btn-modern"><Download size={20} /></button>
             </div>
           </div>
 
@@ -254,10 +163,8 @@ export default function App() {
                 <div className="entry-header">
                   <span style={{color: MOOD_COLORS[e.mood]}}>{MOOD_LABELS[e.mood].toUpperCase()}</span>
                   <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
-                  <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{color: '#ff7f7f', cursor: 'pointer'}} />
                 </div>
-                <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
-                <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
+                <div className="entry-text">{e.situation}</div>
               </div>
             ))}
           </div>
