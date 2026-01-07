@@ -4,7 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail, Calendar } from 'lucide-react';
+import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail } from 'lucide-react';
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -22,12 +22,13 @@ const MOOD_COLORS = {
   angry: '#ff7f7f'
 };
 
+// MAPEAMENTO DOS NOVOS NOMES
 const MOOD_LABELS = {
-  happy: 'FELIZ',
-  neutral: 'NEUTRO',
-  sad: 'TRISTE',
-  anxious: 'ANSIOSO',
-  angry: 'BRAVO'
+  happy: 'Feliz/Radiante',
+  neutral: 'Neutro/Calmo',
+  sad: 'Triste/Deprê',
+  anxious: 'Ansioso/Nervoso',
+  angry: 'Bravo/Muito Estressado/Raiva'
 };
 
 export default function App() {
@@ -126,7 +127,7 @@ export default function App() {
     doc.text("MINDLOG - HISTORICO", 14, 20);
     const tableRows = entries.map(e => [
       new Date(e.date).toLocaleDateString('pt-BR'),
-      e.mood.toUpperCase(),
+      MOOD_LABELS[e.mood].toUpperCase(),
       e.situation,
       e.thoughts
     ]);
@@ -198,7 +199,7 @@ export default function App() {
         <div className="chart-wrapper">
           <Doughnut 
             data={{
-              labels: ['Feliz', 'Neutro', 'Triste', 'Ansioso', 'Bravo'],
+              labels: Object.values(MOOD_LABELS),
               datasets: [{
                 data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
                 backgroundColor: Object.values(MOOD_COLORS),
@@ -214,11 +215,11 @@ export default function App() {
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
           <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})} style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}>
-            <option value="happy">Verde Menta (Feliz)</option>
-            <option value="neutral">Bege Neutro (Calmo)</option>
-            <option value="sad">Azul Pastel (Triste)</option>
-            <option value="anxious">Lavanda Clarinho (Ansioso)</option>
-            <option value="angry">Coral Melancia (Bravo)</option>
+            <option value="happy">{MOOD_LABELS.happy}</option>
+            <option value="neutral">{MOOD_LABELS.neutral}</option>
+            <option value="sad">{MOOD_LABELS.sad}</option>
+            <option value="anxious">{MOOD_LABELS.anxious}</option>
+            <option value="angry">{MOOD_LABELS.angry}</option>
           </select>
         </div>
         <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
@@ -269,7 +270,6 @@ export default function App() {
           <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
         </div>
 
-        {/* TAGS DE FILTRO RETORNADAS */}
         <div className="filter-chips">
           <button 
             className={filterMood === 'all' ? 'chip active' : 'chip'} 
@@ -284,7 +284,7 @@ export default function App() {
               onClick={() => setFilterMood(m)} 
               style={filterMood === m ? { backgroundColor: MOOD_COLORS[m], color: '#000' } : {}}
             >
-              {MOOD_LABELS[m]}
+              {MOOD_LABELS[m].toUpperCase()}
             </button>
           ))}
         </div>
@@ -296,7 +296,7 @@ export default function App() {
           filteredEntries.map(e => (
             <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
               <div className="entry-header">
-                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{MOOD_LABELS[e.mood]}</span>
+                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{MOOD_LABELS[e.mood].toUpperCase()}</span>
                 <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
                 <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
               </div>
