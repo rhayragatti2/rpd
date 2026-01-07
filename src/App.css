@@ -201,3 +201,70 @@ textarea { min-height: 80px; resize: none; } /* Reduzi um pouco a altura para ca
 .filter-chips::-webkit-scrollbar {
   display: none; /* Esconde scroll no mobile */
 }
+
+/* Estilos do Calendário */
+.calendar-card {
+  padding: 20px;
+  background: var(--card);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-header h3 {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.calendar-day-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 0.75rem;
+}
+
+.day-number {
+  z-index: 2;
+  font-weight: 500;
+}
+
+.day-dot {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.icon-btn-small {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  padding: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
