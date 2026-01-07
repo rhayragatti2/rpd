@@ -4,7 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail } from 'lucide-react';
+import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail, Calendar } from 'lucide-react';
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -20,6 +20,14 @@ const MOOD_COLORS = {
   sad: '#a2d2ff',
   anxious: '#e0dbff',
   angry: '#ff7f7f'
+};
+
+const MOOD_LABELS = {
+  happy: 'FELIZ',
+  neutral: 'NEUTRO',
+  sad: 'TRISTE',
+  anxious: 'ANSIOSO',
+  angry: 'BRAVO'
 };
 
 export default function App() {
@@ -40,7 +48,6 @@ export default function App() {
     situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' 
   });
 
-  // Monitorar Estado da Sessão
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -55,7 +62,6 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Buscar Registros do Banco
   async function fetchEntries() {
     setLoading(true);
     const { data, error } = await supabase
@@ -67,7 +73,6 @@ export default function App() {
     setLoading(false);
   }
 
-  // Autenticação
   const handleAuth = async (e) => {
     e.preventDefault();
     let result;
@@ -76,7 +81,6 @@ export default function App() {
     } else {
       result = await supabase.auth.signInWithPassword({ email, password });
     }
-
     if (result.error) alert(result.error.message);
   };
 
@@ -85,7 +89,6 @@ export default function App() {
     setEntries([]);
   };
 
-  // Salvar Registro
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.situation) return;
@@ -106,11 +109,11 @@ export default function App() {
       alert("Erro ao salvar: " + error.message);
     } else {
       setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
+      setDateType('hoje');
       fetchEntries();
     }
   };
 
-  // Deletar Registro
   const deleteEntry = async (id) => {
     if (window.confirm("Excluir registro permanentemente?")) {
       const { error } = await supabase.from('entries').delete().eq('id', id);
@@ -131,7 +134,6 @@ export default function App() {
     doc.save("mindlog-registro.pdf");
   };
 
-  // Lógica de Calendário (Mantida)
   const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
   const getDayColor = (day) => {
@@ -147,7 +149,6 @@ export default function App() {
     return matchesSearch && matchesMood;
   });
 
-  // TELA DE LOGIN
   if (!user) {
     return (
       <div className="container login-screen">
@@ -181,12 +182,11 @@ export default function App() {
     );
   }
 
-  // APP PRINCIPAL
   return (
     <div className="container">
       <header className="header">
         <div className="logout-area">
-          <LogOut size={20} onClick={handleLogout} className="logout-icon" />
+          <LogOut size={22} onClick={handleLogout} className="logout-icon" style={{ cursor: 'pointer', color: '#a1a1aa' }} />
         </div>
         <div className="logo-icon" style={{ borderColor: MOOD_COLORS[formData.mood], color: MOOD_COLORS[formData.mood] }}>
           <BrainCircuit size={42} strokeWidth={1.5} />
@@ -194,7 +194,6 @@ export default function App() {
         <h1>MINDLOG</h1>
       </header>
 
-      {/* Seção de Gráfico */}
       <section className="card">
         <div className="chart-wrapper">
           <Doughnut 
@@ -211,7 +210,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Formulário Principal */}
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
@@ -243,7 +241,6 @@ export default function App() {
         <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
       </form>
 
-      {/* Calendário */}
       <div className="card calendar-card">
         <div className="calendar-header">
           <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}><ChevronLeft size={20}/></button>
@@ -263,25 +260,45 @@ export default function App() {
         </div>
       </div>
 
-      {/* Busca e Lista */}
       <div className="search-section">
         <div className="search-bar-container">
           <div className="search-input-wrapper">
             <Search size={18} color="#a1a1aa" />
-            <input placeholder="BUSCAR..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input placeholder="BUSCAR POR TEXTO..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
+        </div>
+
+        {/* TAGS DE FILTRO RETORNADAS */}
+        <div className="filter-chips">
+          <button 
+            className={filterMood === 'all' ? 'chip active' : 'chip'} 
+            onClick={() => setFilterMood('all')}
+          >
+            TODOS
+          </button>
+          {Object.keys(MOOD_COLORS).map(m => (
+            <button 
+              key={m} 
+              className={filterMood === m ? 'chip active' : 'chip'} 
+              onClick={() => setFilterMood(m)} 
+              style={filterMood === m ? { backgroundColor: MOOD_COLORS[m], color: '#000' } : {}}
+            >
+              {MOOD_LABELS[m]}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="entries-list">
-        {loading ? <p style={{textAlign: 'center'}}>Carregando registros...</p> : 
+        {loading ? <p style={{textAlign: 'center', color: '#a1a1aa'}}>Carregando registros...</p> : 
+          filteredEntries.length === 0 ? <p style={{textAlign: 'center', color: '#a1a1aa', marginTop: '20px'}}>Nenhum registro encontrado.</p> :
           filteredEntries.map(e => (
             <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
               <div className="entry-header">
-                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
+                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{MOOD_LABELS[e.mood]}</span>
                 <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
-                <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer'}} />
+                <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
               </div>
               <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
               <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
