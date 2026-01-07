@@ -27,11 +27,11 @@ const MOOD_COLORS = {
 };
 
 const MOOD_LABELS = {
-  happy: 'Feliz/Radiante',
-  neutral: 'Neutro/Calmo',
-  sad: 'Triste/Deprê',
-  anxious: 'Ansioso/Nervoso',
-  angry: 'Bravo/Muito Estressado/Raiva'
+  happy: 'Feliz / Radiante',
+  neutral: 'Neutro / Calmo',
+  sad: 'Triste / Deprê',
+  anxious: 'Ansioso / Nervoso',
+  angry: 'Bravo / Muito Estressado / Raiva'
 };
 
 export default function App() {
