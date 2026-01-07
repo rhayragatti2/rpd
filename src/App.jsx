@@ -22,7 +22,6 @@ const MOOD_COLORS = {
   angry: '#ff7f7f'
 };
 
-// MAPEAMENTO DOS NOVOS NOMES
 const MOOD_LABELS = {
   happy: 'Feliz/Radiante',
   neutral: 'Neutro/Calmo',
@@ -158,7 +157,7 @@ export default function App() {
           <h1>MINDLOG</h1>
         </header>
         <form className="card auth-card" onSubmit={handleAuth}>
-          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR DIÁRIO'}</h2>
+          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR REGISTROS'}</h2>
           <div className="form-group">
             <div className="search-input-wrapper">
               <Mail size={18} color="#a1a1aa" />
@@ -239,7 +238,7 @@ export default function App() {
           )}
         </div>
 
-        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
+        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR REGISTRO </button>
       </form>
 
       <div className="card calendar-card">
@@ -300,8 +299,18 @@ export default function App() {
                 <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
                 <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
               </div>
-              <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
-              <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
+              
+              <div className="entry-section-title">Situação</div>
+              <div className="entry-text">{e.situation}</div>
+              
+              <div className="entry-section-title">Emoção</div>
+              <div className="entry-text">{e.emotion || '—'}</div>
+              
+              <div className="entry-section-title">Pensamento</div>
+              <div className="entry-text">{e.thoughts}</div>
+
+              <div className="entry-section-title">Comportamento</div>
+              <div className="entry-text">{e.behavior || '—'}</div>
             </div>
           ))
         }
