@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail } from 'lucide-react';
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+// CONFIGURAÇÃO SUPABASE
+const supabaseUrl = 'https://vwcmdfeliiryobcjdqgz.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3Y21kZmVsaWlyeW9iY2pkcWd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTM4NDYsImV4cCI6MjA4MzM2OTg0Nn0.sqkIAnkDthI9OVPjRNpJa_Pld2LuwgfZRgQjInPYggk';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const MOOD_COLORS = {
   happy: '#b9fbc0',
@@ -17,12 +23,16 @@ const MOOD_COLORS = {
 };
 
 export default function App() {
-  const [entries, setEntries] = useState(() => JSON.parse(localStorage.getItem('mindlog_final_v8')) || []);
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+
   const [search, setSearch] = useState('');
   const [filterMood, setFilterMood] = useState('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  
-  // Novos estados para a data do registro
   const [dateType, setDateType] = useState('hoje'); 
   const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -30,31 +40,82 @@ export default function App() {
     situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' 
   });
 
+  // Monitorar Estado da Sessão
   useEffect(() => {
-    localStorage.setItem('mindlog_final_v8', JSON.stringify(entries));
-  }, [entries]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchEntries();
+    });
 
-  const handleSubmit = (e) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchEntries();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Buscar Registros do Banco
+  async function fetchEntries() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (!error) setEntries(data);
+    setLoading(false);
+  }
+
+  // Autenticação
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    let result;
+    if (isRegistering) {
+      result = await supabase.auth.signUp({ email, password });
+    } else {
+      result = await supabase.auth.signInWithPassword({ email, password });
+    }
+
+    if (result.error) alert(result.error.message);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setEntries([]);
+  };
+
+  // Salvar Registro
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.situation) return;
 
-    // Lógica para definir a data final do registro
     let finalDate = new Date();
-    if (dateType === 'ontem') {
-      finalDate.setDate(finalDate.getDate() - 1);
-    } else if (dateType === 'outro') {
-      finalDate = new Date(customDate + "T12:00:00"); // Adicionado meio-dia para evitar erros de fuso horário
-    }
+    if (dateType === 'ontem') finalDate.setDate(finalDate.getDate() - 1);
+    else if (dateType === 'outro') finalDate = new Date(customDate + "T12:00:00");
 
     const newEntry = { 
       ...formData, 
-      id: Date.now(), 
-      date: finalDate.toISOString() 
+      date: finalDate.toISOString(),
+      user_id: user.id 
     };
 
-    setEntries([newEntry, ...entries]);
-    setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
-    setDateType('hoje');
+    const { error } = await supabase.from('entries').insert([newEntry]);
+    
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
+      fetchEntries();
+    }
+  };
+
+  // Deletar Registro
+  const deleteEntry = async (id) => {
+    if (window.confirm("Excluir registro permanentemente?")) {
+      const { error } = await supabase.from('entries').delete().eq('id', id);
+      if (!error) fetchEntries();
+    }
   };
 
   const exportPDF = () => {
@@ -70,9 +131,9 @@ export default function App() {
     doc.save("mindlog-registro.pdf");
   };
 
+  // Lógica de Calendário (Mantida)
   const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-
   const getDayColor = (day) => {
     const dayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toLocaleDateString();
     const entry = entries.find(e => new Date(e.date).toLocaleDateString() === dayDate);
@@ -86,15 +147,54 @@ export default function App() {
     return matchesSearch && matchesMood;
   });
 
+  // TELA DE LOGIN
+  if (!user) {
+    return (
+      <div className="container login-screen">
+        <header className="header">
+          <div className="logo-icon" style={{ borderColor: '#fff' }}><BrainCircuit size={42} /></div>
+          <h1>MINDLOG</h1>
+        </header>
+        <form className="card auth-card" onSubmit={handleAuth}>
+          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR DIÁRIO'}</h2>
+          <div className="form-group">
+            <div className="search-input-wrapper">
+              <Mail size={18} color="#a1a1aa" />
+              <input type="email" placeholder="E-MAIL" value={email} onChange={e => setEmail(e.target.value)} required />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="search-input-wrapper">
+              <Lock size={18} color="#a1a1aa" />
+              <input type="password" placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} required />
+            </div>
+          </div>
+          <button type="submit" className="btn-primary">
+            {isRegistering ? <UserPlus size={20}/> : <LogIn size={20}/>} 
+            {isRegistering ? 'CADASTRAR' : 'ENTRAR'}
+          </button>
+          <p className="toggle-auth" onClick={() => setIsRegistering(!isRegistering)}>
+            {isRegistering ? 'Já tem conta? Entre aqui' : 'Não tem conta? Cadastre-se'}
+          </p>
+        </form>
+      </div>
+    );
+  }
+
+  // APP PRINCIPAL
   return (
     <div className="container">
       <header className="header">
+        <div className="logout-area">
+          <LogOut size={20} onClick={handleLogout} className="logout-icon" />
+        </div>
         <div className="logo-icon" style={{ borderColor: MOOD_COLORS[formData.mood], color: MOOD_COLORS[formData.mood] }}>
           <BrainCircuit size={42} strokeWidth={1.5} />
         </div>
         <h1>MINDLOG</h1>
       </header>
 
+      {/* Seção de Gráfico */}
       <section className="card">
         <div className="chart-wrapper">
           <Doughnut 
@@ -111,6 +211,7 @@ export default function App() {
         </div>
       </section>
 
+      {/* Formulário Principal */}
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
@@ -122,42 +223,32 @@ export default function App() {
             <option value="angry">Coral Melancia (Bravo)</option>
           </select>
         </div>
-        
         <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
         <div className="form-group"><label>Emoção</label><textarea placeholder="O que sentiu?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} /></div>
         <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
         <div className="form-group"><label>Comportamento</label><textarea placeholder="O que fez?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} /></div>
         
-        {/* NOVO CAMPO DE DATA */}
         <div className="form-group date-selection">
-          <label>Quando isso aconteceu?</label>
+          <label>Quando aconteceu?</label>
           <div className="date-chips">
             <button type="button" className={dateType === 'hoje' ? 'chip active' : 'chip'} onClick={() => setDateType('hoje')}>HOJE</button>
             <button type="button" className={dateType === 'ontem' ? 'chip active' : 'chip'} onClick={() => setDateType('ontem')}>ONTEM</button>
             <button type="button" className={dateType === 'outro' ? 'chip active' : 'chip'} onClick={() => setDateType('outro')}>OUTRA DATA</button>
           </div>
           {dateType === 'outro' && (
-            <input 
-              type="date" 
-              className="custom-date-input" 
-              value={customDate} 
-              onChange={(e) => setCustomDate(e.target.value)} 
-            />
+            <input type="date" className="custom-date-input" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
           )}
         </div>
 
         <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
       </form>
 
+      {/* Calendário */}
       <div className="card calendar-card">
         <div className="calendar-header">
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
-            <ChevronLeft size={20}/>
-          </button>
+          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}><ChevronLeft size={20}/></button>
           <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
-            <ChevronRight size={20}/>
-          </button>
+          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}><ChevronRight size={20}/></button>
         </div>
         <div className="calendar-grid">
           {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
@@ -172,36 +263,31 @@ export default function App() {
         </div>
       </div>
 
+      {/* Busca e Lista */}
       <div className="search-section">
         <div className="search-bar-container">
           <div className="search-input-wrapper">
             <Search size={18} color="#a1a1aa" />
-            <input placeholder="BUSCAR POR TEXTO..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input placeholder="BUSCAR..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
-        </div>
-        <div className="filter-chips">
-          <button className={filterMood === 'all' ? 'chip active' : 'chip'} onClick={() => setFilterMood('all')}>TODOS</button>
-          {Object.keys(MOOD_COLORS).map(m => (
-            <button key={m} className={filterMood === m ? 'chip active' : 'chip'} onClick={() => setFilterMood(m)} style={filterMood === m ? { backgroundColor: MOOD_COLORS[m], color: '#000' } : {}}>{m.toUpperCase()}</button>
-          ))}
         </div>
       </div>
 
       <div className="entries-list">
-        {filteredEntries.map(e => (
-          <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
-            <div className="entry-header">
-              <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
-              <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
-              <Trash2 size={18} onClick={() => setEntries(entries.filter(i => i.id !== e.id))} style={{cursor: 'pointer'}} />
+        {loading ? <p style={{textAlign: 'center'}}>Carregando registros...</p> : 
+          filteredEntries.map(e => (
+            <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
+              <div className="entry-header">
+                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
+                <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
+                <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer'}} />
+              </div>
+              <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
+              <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
             </div>
-            <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
-            <div className="entry-section-title">Emoção</div><div className="entry-text">{e.emotion}</div>
-            <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
-            <div className="entry-section-title">Comportamento</div><div className="entry-text">{e.behavior}</div>
-          </div>
-        ))}
+          ))
+        }
       </div>
     </div>
   );
