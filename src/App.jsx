@@ -4,7 +4,11 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, LogOut, Mail } from 'lucide-react';
+import { 
+  Trash2, Search, Download, CheckCircle2, BrainCircuit, 
+  ChevronLeft, ChevronRight, Lock, LogIn, UserPlus, 
+  LogOut, Mail, User, Eye, EyeOff, BookOpen, Save 
+} from 'lucide-react';
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -36,7 +40,12 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [view, setView] = useState('journal'); // 'journal' ou 'profile'
+
+  // Perfil - Persistência Simples
+  const [userName, setUserName] = useState(localStorage.getItem('ml_name') || '');
 
   const [search, setSearch] = useState('');
   const [filterMood, setFilterMood] = useState('all');
@@ -87,6 +96,12 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setEntries([]);
+    setView('journal');
+  };
+
+  const saveProfile = () => {
+    localStorage.setItem('ml_name', userName);
+    alert("Perfil atualizado!");
   };
 
   const handleSubmit = async (e) => {
@@ -122,9 +137,11 @@ export default function App() {
   };
 
   const exportPDF = () => {
-    const doc = new jsPDF('l', 'mm', 'a4'); // 'l' define orientação Paisagem (Landscape)
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+    const nomeRelatorio = userName ? userName.toUpperCase() : 'USUÁRIO';
+    
     doc.setFontSize(18);
-    doc.text("MINDLOG - HISTÓRICO COMPLETO", 14, 15);
+    doc.text(`MINDLOG - HISTÓRICO DE ${nomeRelatorio}`, 14, 15);
     
     const tableRows = entries.map(e => [
       new Date(e.date).toLocaleDateString('pt-BR'),
@@ -140,18 +157,14 @@ export default function App() {
       body: tableRows,
       startY: 25,
       styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [45, 45, 48] },
       columnStyles: {
-        0: { cellWidth: 25 }, // Data
-        1: { cellWidth: 35 }, // Tom
-        2: { cellWidth: 'auto' }, // Situação
-        3: { cellWidth: 'auto' }, // Emoção
-        4: { cellWidth: 'auto' }, // Pensamento
-        5: { cellWidth: 'auto' }  // Comportamento
-      },
-      headStyles: { fillColor: [45, 45, 48] }
+        0: { cellWidth: 22 },
+        1: { cellWidth: 35 }
+      }
     });
 
-    doc.save("mindlog-completo.pdf");
+    doc.save(`mindlog-${nomeRelatorio.toLowerCase()}.pdf`);
   };
 
   const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -190,7 +203,8 @@ export default function App() {
           <div className="form-group">
             <div className="search-input-wrapper">
               <Lock size={18} color="#a1a1aa" />
-              <input type="password" placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} required />
+              <input type={showPassword ? "text" : "password"} placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} required />
+              {showPassword ? <EyeOff size={18} className="password-toggle" onClick={() => setShowPassword(false)} /> : <Eye size={18} className="password-toggle" onClick={() => setShowPassword(true)} />}
             </div>
           </div>
           <button type="submit" className="btn-primary">
@@ -207,129 +221,147 @@ export default function App() {
 
   return (
     <div className="container">
+      <nav className="bottom-nav">
+        <button className={view === 'journal' ? 'nav-item active' : 'nav-item'} onClick={() => setView('journal')}>
+          <BookOpen size={24} />
+          <span>Diário</span>
+        </button>
+        <button className={view === 'profile' ? 'nav-item active' : 'nav-item'} onClick={() => setView('profile')}>
+          <User size={24} />
+          <span>Perfil</span>
+        </button>
+      </nav>
+
       <header className="header">
-        <div className="logout-area">
-          <LogOut size={22} onClick={handleLogout} className="logout-icon" style={{ cursor: 'pointer', color: '#a1a1aa' }} />
-        </div>
-        <div className="logo-icon" style={{ borderColor: MOOD_COLORS[formData.mood], color: MOOD_COLORS[formData.mood] }}>
+        <div className="logo-icon" style={{ borderColor: view === 'journal' ? MOOD_COLORS[formData.mood] : '#a1a1aa' }}>
           <BrainCircuit size={42} strokeWidth={1.5} />
         </div>
         <h1>MINDLOG</h1>
+        {userName && <p className="welcome-text">Olá, {userName}</p>}
       </header>
 
-      <section className="card">
-        <div className="chart-wrapper">
-          <Doughnut 
-            data={{
-              labels: Object.values(MOOD_LABELS),
-              datasets: [{
-                data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
-                backgroundColor: Object.values(MOOD_COLORS),
-                borderWidth: 0
-              }]
-            }} 
-            options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', usePointStyle: true } } } }} 
-          />
-        </div>
-      </section>
-
-      <form className="card" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Qual o seu tom agora?</label>
-          <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})} style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}>
-            <option value="happy">{MOOD_LABELS.happy}</option>
-            <option value="neutral">{MOOD_LABELS.neutral}</option>
-            <option value="sad">{MOOD_LABELS.sad}</option>
-            <option value="anxious">{MOOD_LABELS.anxious}</option>
-            <option value="angry">{MOOD_LABELS.angry}</option>
-          </select>
-        </div>
-        <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
-        <div className="form-group"><label>Emoção</label><textarea placeholder="O que sentiu?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} /></div>
-        <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
-        <div className="form-group"><label>Comportamento</label><textarea placeholder="O que fez?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} /></div>
-        
-        <div className="form-group date-selection">
-          <label>Quando aconteceu?</label>
-          <div className="date-chips">
-            <button type="button" className={dateType === 'hoje' ? 'chip active' : 'chip'} onClick={() => setDateType('hoje')}>HOJE</button>
-            <button type="button" className={dateType === 'ontem' ? 'chip active' : 'chip'} onClick={() => setDateType('ontem')}>ONTEM</button>
-            <button type="button" className={dateType === 'outro' ? 'chip active' : 'chip'} onClick={() => setDateType('outro')}>OUTRA DATA</button>
-          </div>
-          {dateType === 'outro' && (
-            <input type="date" className="custom-date-input" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
-          )}
-        </div>
-
-        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
-      </form>
-
-      <div className="card calendar-card">
-        <div className="calendar-header">
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}><ChevronLeft size={20}/></button>
-          <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}><ChevronRight size={20}/></button>
-        </div>
-        <div className="calendar-grid">
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
-          {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
-          {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
-            <div key={day} className="calendar-day">
-              <div className="day-dot" style={{ backgroundColor: getDayColor(day) }}>
-                <span className="day-number">{day}</span>
+      {view === 'profile' ? (
+        <section className="profile-section">
+          <div className="card">
+            <h2>MEU PERFIL</h2>
+            <div className="form-group">
+              <label>Nome</label>
+              <input type="text" placeholder="Como quer ser chamado?" value={userName} onChange={e => setUserName(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>E-mail</label>
+              <div className="search-input-wrapper readonly">
+                <Mail size={18} color="#555" />
+                <input type="text" value={user.email} readOnly />
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="search-section">
-        <div className="search-bar-container">
-          <div className="search-input-wrapper">
-            <Search size={18} color="#a1a1aa" />
-            <input placeholder="BUSCAR POR TEXTO..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
-        </div>
-
-        <div className="filter-chips">
-          <button 
-            className={filterMood === 'all' ? 'chip active' : 'chip'} 
-            onClick={() => setFilterMood('all')}
-          >
-            TODOS
-          </button>
-          {Object.keys(MOOD_COLORS).map(m => (
-            <button 
-              key={m} 
-              className={filterMood === m ? 'chip active' : 'chip'} 
-              onClick={() => setFilterMood(m)} 
-              style={filterMood === m ? { backgroundColor: MOOD_COLORS[m], color: '#000' } : {}}
-            >
-              {MOOD_LABELS[m].toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="entries-list">
-        {loading ? <p style={{textAlign: 'center', color: '#a1a1aa'}}>Carregando registros...</p> : 
-          filteredEntries.length === 0 ? <p style={{textAlign: 'center', color: '#a1a1aa', marginTop: '20px'}}>Nenhum registro encontrado.</p> :
-          filteredEntries.map(e => (
-            <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
-              <div className="entry-header">
-                <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{MOOD_LABELS[e.mood].toUpperCase()}</span>
-                <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
-                <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
+            <div className="form-group">
+              <label>Senha Cadastrada</label>
+              <div className="search-input-wrapper readonly">
+                <Lock size={18} color="#555" />
+                <input type={showPassword ? "text" : "password"} value={password} readOnly />
+                {showPassword ? <EyeOff size={18} className="password-toggle" onClick={() => setShowPassword(false)} /> : <Eye size={18} className="password-toggle" onClick={() => setShowPassword(true)} />}
               </div>
-              <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
-              <div className="entry-section-title">Emoção</div><div className="entry-text">{e.emotion || '—'}</div>
-              <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
-              <div className="entry-section-title">Comportamento</div><div className="entry-text">{e.behavior || '—'}</div>
             </div>
-          ))
-        }
-      </div>
+            <button className="btn-primary" onClick={saveProfile} style={{marginBottom: '10px'}}><Save size={20} /> SALVAR ALTERAÇÕES</button>
+            <button className="btn-secondary logout-full" onClick={handleLogout}><LogOut size={20} /> SAIR DA CONTA</button>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="card">
+            <div className="chart-wrapper">
+              <Doughnut 
+                data={{
+                  labels: Object.values(MOOD_LABELS),
+                  datasets: [{
+                    data: ['happy', 'neutral', 'sad', 'anxious', 'angry'].map(m => entries.filter(e => e.mood === m).length),
+                    backgroundColor: Object.values(MOOD_COLORS),
+                    borderWidth: 0
+                  }]
+                }} 
+                options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', usePointStyle: true } } } }} 
+              />
+            </div>
+          </section>
+
+          <form className="card" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Qual o seu tom agora?</label>
+              <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})} style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}>
+                {Object.keys(MOOD_LABELS).map(key => <option key={key} value={key}>{MOOD_LABELS[key]}</option>)}
+              </select>
+            </div>
+            <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
+            <div className="form-group"><label>Emoção</label><textarea placeholder="O que sentiu?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} /></div>
+            <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
+            <div className="form-group"><label>Comportamento</label><textarea placeholder="O que fez?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} /></div>
+            
+            <div className="form-group date-selection">
+              <label>Quando aconteceu?</label>
+              <div className="date-chips">
+                {['hoje', 'ontem', 'outro'].map(t => (
+                  <button key={t} type="button" className={dateType === t ? 'chip active' : 'chip'} onClick={() => setDateType(t)}>
+                    {t.toUpperCase() === 'OUTRO' ? 'OUTRA DATA' : t.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              {dateType === 'outro' && <input type="date" className="custom-date-input" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />}
+            </div>
+            <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
+          </form>
+
+          <div className="card calendar-card">
+            <div className="calendar-header">
+              <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}><ChevronLeft size={20}/></button>
+              <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
+              <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}><ChevronRight size={20}/></button>
+            </div>
+            <div className="calendar-grid">
+              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
+              {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
+              {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
+                <div key={day} className="calendar-day"><div className="day-dot" style={{ backgroundColor: getDayColor(day) }}><span className="day-number">{day}</span></div></div>
+              ))}
+            </div>
+          </div>
+
+          <div className="search-section">
+            <div className="search-bar-container">
+              <div className="search-input-wrapper">
+                <Search size={18} color="#a1a1aa" />
+                <input placeholder="BUSCAR..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
+            </div>
+            <div className="filter-chips">
+              <button className={filterMood === 'all' ? 'chip active' : 'chip'} onClick={() => setFilterMood('all')}>TODOS</button>
+              {Object.keys(MOOD_COLORS).map(m => (
+                <button key={m} className={filterMood === m ? 'chip active' : 'chip'} onClick={() => setFilterMood(m)} style={filterMood === m ? { backgroundColor: MOOD_COLORS[m], color: '#000' } : {}}>{MOOD_LABELS[m].toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="entries-list">
+            {loading ? <p className="status-text">Carregando registros...</p> : 
+              filteredEntries.length === 0 ? <p className="status-text">Nenhum registro encontrado.</p> :
+              filteredEntries.map(e => (
+                <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
+                  <div className="entry-header">
+                    <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{MOOD_LABELS[e.mood].toUpperCase()}</span>
+                    <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
+                    <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
+                  </div>
+                  <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
+                  <div className="entry-section-title">Emoção</div><div className="entry-text">{e.emotion || '—'}</div>
+                  <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
+                  <div className="entry-section-title">Comportamento</div><div className="entry-text">{e.behavior || '—'}</div>
+                </div>
+              ))
+            }
+          </div>
+        </>
+      )}
     </div>
   );
 }
