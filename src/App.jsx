@@ -122,16 +122,36 @@ export default function App() {
   };
 
   const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.text("MINDLOG - HISTORICO", 14, 20);
+    const doc = new jsPDF('l', 'mm', 'a4'); // 'l' define orientação Paisagem (Landscape)
+    doc.setFontSize(18);
+    doc.text("MINDLOG - HISTÓRICO COMPLETO", 14, 15);
+    
     const tableRows = entries.map(e => [
       new Date(e.date).toLocaleDateString('pt-BR'),
       MOOD_LABELS[e.mood].toUpperCase(),
       e.situation,
-      e.thoughts
+      e.emotion || '—',
+      e.thoughts,
+      e.behavior || '—'
     ]);
-    doc.autoTable({ head: [['DATA', 'TOM', 'SITUACAO', 'PENSAMENTO']], body: tableRows, startY: 30 });
-    doc.save("mindlog-registro.pdf");
+
+    doc.autoTable({
+      head: [['DATA', 'TOM', 'SITUAÇÃO', 'EMOÇÃO', 'PENSAMENTO', 'COMPORTAMENTO']],
+      body: tableRows,
+      startY: 25,
+      styles: { fontSize: 8, cellPadding: 3 },
+      columnStyles: {
+        0: { cellWidth: 25 }, // Data
+        1: { cellWidth: 35 }, // Tom
+        2: { cellWidth: 'auto' }, // Situação
+        3: { cellWidth: 'auto' }, // Emoção
+        4: { cellWidth: 'auto' }, // Pensamento
+        5: { cellWidth: 'auto' }  // Comportamento
+      },
+      headStyles: { fillColor: [45, 45, 48] }
+    });
+
+    doc.save("mindlog-completo.pdf");
   };
 
   const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -143,8 +163,11 @@ export default function App() {
   };
 
   const filteredEntries = entries.filter(e => {
-    const matchesSearch = e.situation.toLowerCase().includes(search.toLowerCase()) || 
-                          e.thoughts.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase();
+    const matchesSearch = e.situation.toLowerCase().includes(searchLower) || 
+                          e.thoughts.toLowerCase().includes(searchLower) ||
+                          (e.emotion && e.emotion.toLowerCase().includes(searchLower)) ||
+                          (e.behavior && e.behavior.toLowerCase().includes(searchLower));
     const matchesMood = filterMood === 'all' || e.mood === filterMood;
     return matchesSearch && matchesMood;
   });
@@ -157,7 +180,7 @@ export default function App() {
           <h1>MINDLOG</h1>
         </header>
         <form className="card auth-card" onSubmit={handleAuth}>
-          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR REGISTROS'}</h2>
+          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR DIÁRIO'}</h2>
           <div className="form-group">
             <div className="search-input-wrapper">
               <Mail size={18} color="#a1a1aa" />
@@ -238,7 +261,7 @@ export default function App() {
           )}
         </div>
 
-        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR REGISTRO </button>
+        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
       </form>
 
       <div className="card calendar-card">
@@ -299,18 +322,10 @@ export default function App() {
                 <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
                 <Trash2 size={18} onClick={() => deleteEntry(e.id)} style={{cursor: 'pointer', color: '#ff7f7f'}} />
               </div>
-              
-              <div className="entry-section-title">Situação</div>
-              <div className="entry-text">{e.situation}</div>
-              
-              <div className="entry-section-title">Emoção</div>
-              <div className="entry-text">{e.emotion || '—'}</div>
-              
-              <div className="entry-section-title">Pensamento</div>
-              <div className="entry-text">{e.thoughts}</div>
-
-              <div className="entry-section-title">Comportamento</div>
-              <div className="entry-text">{e.behavior || '—'}</div>
+              <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
+              <div className="entry-section-title">Emoção</div><div className="entry-text">{e.emotion || '—'}</div>
+              <div className="entry-section-title">Pensamento</div><div className="entry-text">{e.thoughts}</div>
+              <div className="entry-section-title">Comportamento</div><div className="entry-text">{e.behavior || '—'}</div>
             </div>
           ))
         }
