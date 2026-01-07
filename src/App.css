@@ -166,3 +166,81 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--s
 .entry-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; }
 .entry-section-title { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-top: 15px; letter-spacing: 0.05em; }
 .entry-text { margin-top: 4px; line-height: 1.5; color: #e4e4e7; font-size: 0.95rem; }
+
+
+/* Container que permite a rolagem horizontal */
+.icon-selector-scroll {
+  width: 100%;
+  overflow-x: auto;
+  background: #000;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 15px;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: var(--card-border) transparent;
+}
+
+/* O "Palco" onde os ícones ficam montados */
+.icon-grid-viewport {
+  display: flex; /* Alinha as categorias lado a lado */
+  gap: 30px;
+  width: max-content; /* Força o container a expandir para a direita */
+}
+
+.icon-category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Aqui criamos as 5 linhas verticais */
+.icons-horizontal-stack {
+  display: grid;
+  grid-template-rows: repeat(5, 50px); /* 5 linhas fixas */
+  grid-auto-flow: column; /* Faz os ícones preencherem as colunas automaticamente */
+  gap: 8px;
+}
+
+.icon-choice {
+  width: 50px;
+  height: 50px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-choice.active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+
+.icon-choice:hover:not(.active) {
+  border-color: var(--text);
+}
+
+/* Esconde scrollbar no Chrome/Safari para ficar mais bonito */
+.icon-selector-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.icon-selector-scroll::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
