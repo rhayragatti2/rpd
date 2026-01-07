@@ -166,3 +166,31 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--s
 .entry-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; }
 .entry-section-title { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-top: 15px; letter-spacing: 0.05em; }
 .entry-text { margin-top: 4px; line-height: 1.5; color: #e4e4e7; font-size: 0.95rem; }
+
+
+.date-selection {
+  margin-top: 10px;
+}
+
+.date-chips {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.custom-date-input {
+  margin-top: 10px;
+  background: #000;
+  border: 1px solid var(--card-border);
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  width: 100%;
+  font-family: inherit;
+}
+
+/* Garante que o input de data apareça bem no mobile */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
