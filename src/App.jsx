@@ -113,24 +113,28 @@ export default function App() {
       </form>
 
       {/* Visão de Calendário */}
-      <div className="card calendar-card">
-        <div className="calendar-header">
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}><ChevronLeft size={20}/></button>
-          <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
-          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}><ChevronRight size={20}/></button>
-        </div>
-        <div className="calendar-grid">
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
-          {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
-          {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
-            <div key={day} className="calendar-day">
-              <div className="day-dot" style={{ backgroundColor: getDayColor(day) }}>
-                <span className="day-number">{day}</span>
-              </div>
-            </div>
-          ))}
+<div className="card calendar-card">
+  <div className="calendar-header">
+    <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
+      <ChevronLeft size={20}/>
+    </button>
+    <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
+    <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
+      <ChevronRight size={20}/>
+    </button>
+  </div>
+  <div className="calendar-grid">
+    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
+    {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
+    {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
+      <div key={day} className="calendar-day">
+        <div className="day-dot" style={{ backgroundColor: getDayColor(day) }}>
+          <span className="day-number">{day}</span>
         </div>
       </div>
+    ))}
+  </div>
+</div>
 
       {/* Busca e Filtros */}
       <div className="search-section">
