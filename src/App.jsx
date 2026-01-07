@@ -86,6 +86,11 @@ export default function App() {
     setView('journal');
   };
 
+  const saveProfile = () => {
+    localStorage.setItem('ml_name', userName);
+    alert("Perfil atualizado!");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.situation) return;
@@ -129,20 +134,6 @@ export default function App() {
     doc.save(`mindlog-registros-${nomeRelatorio.toLowerCase()}.pdf`);
   };
 
-  // Lógica de Geração do Calendário
-  const getDaysInMonth = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const days = new Date(year, month + 1, 0).getDate();
-    return { firstDay, days };
-  };
-
-  const { firstDay, days } = getDaysInMonth(currentMonth);
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= days; i++) calendarDays.push(i);
-
   const filteredEntries = entries.filter(e => {
     const matchesSearch = e.situation.toLowerCase().includes(search.toLowerCase()) || e.thoughts.toLowerCase().includes(search.toLowerCase());
     return matchesSearch && (filterMood === 'all' || e.mood === filterMood);
@@ -156,7 +147,7 @@ export default function App() {
           <h1>MINDLOG</h1>
         </header>
         <form className="card auth-card" onSubmit={handleAuth}>
-          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR REGISTRO'}</h2>
+          <h2>{isRegistering ? 'CRIAR CONTA' : 'ACESSAR REGISTROS'}</h2>
           <div className="form-group">
             <div className="search-input-wrapper">
               <Mail size={18} color="#a1a1aa" />
@@ -198,10 +189,31 @@ export default function App() {
       <header className="header">
         <div className="logo-icon" style={{ borderColor: view === 'journal' ? MOOD_COLORS[formData.mood] : '#a1a1aa' }}><BrainCircuit size={42} /></div>
         <h1>MINDLOG</h1>
+        {userName && <p className="welcome-text">Olá, {userName}</p>}
       </header>
 
-      {view === 'journal' && (
+      {view === 'profile' ? (
+        <section className="card">
+          <h2>MEU PERFIL</h2>
+          <div className="form-group"><label>Nome</label><input type="text" value={userName} onChange={e => setUserName(e.target.value)} /></div>
+          <div className="form-group"><label>E-mail</label><div className="search-input-wrapper readonly"><Mail size={18}/><input value={user.email} readOnly /></div></div>
+          <button className="btn-primary" onClick={saveProfile}><Save size={20} /> SALVAR ALTERAÇÕES</button>
+          <button className="btn-secondary" onClick={handleLogout} style={{marginTop: '10px'}}><LogOut size={20} /> SAIR DA CONTA</button>
+        </section>
+      ) : (
         <>
+          <section className="card">
+            <div className="chart-wrapper">
+              <Doughnut data={{
+                labels: Object.values(MOOD_LABELS),
+                datasets: [{
+                  data: Object.keys(MOOD_LABELS).map(m => entries.filter(e => e.mood === m).length),
+                  backgroundColor: Object.values(MOOD_COLORS), borderWidth: 0
+                }]
+              }} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa' } } } }} />
+            </div>
+          </section>
+
           <form className="card" onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Qual o seu tom agora?</label>
@@ -216,40 +228,17 @@ export default function App() {
               <label>Quando aconteceu?</label>
               <div className="date-chips">
                 {['hoje', 'ontem', 'outro'].map(t => (
-                  <button key={t} type="button" className={dateType === t ? 'chip active' : 'chip'} onClick={() => setDateType(t)}>{t.toUpperCase() === 'OUTRO' ? 'OUTRA DATA' : t.toUpperCase()}</button>
+                  <button key={t} type="button" className={dateType === t ? 'chip active' : 'chip'} onClick={() => setDateType(t)}>{t.toUpperCase()}</button>
                 ))}
               </div>
             </div>
-            <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO REGISTRO</button>
+            <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR REGISTRO</button>
           </form>
 
-          <section className="card">
-            <div className="calendar-header">
-              <button className="nav-btn" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
-                <ChevronLeft size={20} />
-              </button>
-              <h2>{new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(currentMonth).toUpperCase()}</h2>
-              <button className="nav-btn" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
-                <ChevronRight size={20} />
-              </button>
-            </div>
-            <div className="calendar-grid">
-              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
-              {calendarDays.map((day, i) => (
-                <div key={i} className="day-dot">
-                  {day}
-                </div>
-              ))}
-            </div>
-          </section>
-
           <div className="search-section">
-            <div className="search-row">
-              <div className="search-input-wrapper">
-                <Search size={18} />
-                <input placeholder="BUSCAR REGISTROS..." value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
-              <button onClick={exportPDF} className="download-btn-modern"><Download size={22} /></button>
+            <div className="search-bar-container">
+              <div className="search-input-wrapper"><Search size={18} /><input placeholder="BUSCAR REGISTROS..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+              <button onClick={exportPDF} className="download-btn-modern"><Download size={24} /></button>
             </div>
             <div className="filter-chips">
               <button className={filterMood === 'all' ? 'chip active' : 'chip'} onClick={() => setFilterMood('all')}>TODOS</button>
