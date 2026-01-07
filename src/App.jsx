@@ -3,17 +3,17 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Search, Download, CheckCircle2, BrainCircuit, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const MOOD_COLORS = {
-  happy: '#b9fbc0',   // Verde Menta
-  neutral: '#f5f5dc', // Bege Neutro
-  sad: '#a2d2ff',     // Azul Pastel
-  anxious: '#e0dbff', // Lavanda Clarinho
-  angry: '#ff7f7f'    // Coral Melancia
+  happy: '#b9fbc0',
+  neutral: '#f5f5dc',
+  sad: '#a2d2ff',
+  anxious: '#e0dbff',
+  angry: '#ff7f7f'
 };
 
 export default function App() {
@@ -21,6 +21,11 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [filterMood, setFilterMood] = useState('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  // Novos estados para a data do registro
+  const [dateType, setDateType] = useState('hoje'); 
+  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
+
   const [formData, setFormData] = useState({ 
     situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' 
   });
@@ -32,9 +37,24 @@ export default function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.situation) return;
-    const newEntry = { ...formData, id: Date.now(), date: new Date().toISOString() };
+
+    // Lógica para definir a data final do registro
+    let finalDate = new Date();
+    if (dateType === 'ontem') {
+      finalDate.setDate(finalDate.getDate() - 1);
+    } else if (dateType === 'outro') {
+      finalDate = new Date(customDate + "T12:00:00"); // Adicionado meio-dia para evitar erros de fuso horário
+    }
+
+    const newEntry = { 
+      ...formData, 
+      id: Date.now(), 
+      date: finalDate.toISOString() 
+    };
+
     setEntries([newEntry, ...entries]);
     setFormData({ situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' });
+    setDateType('hoje');
   };
 
   const exportPDF = () => {
@@ -50,7 +70,6 @@ export default function App() {
     doc.save("mindlog-registro.pdf");
   };
 
-  // Lógica do Calendário
   const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
 
@@ -76,7 +95,6 @@ export default function App() {
         <h1>MINDLOG</h1>
       </header>
 
-      {/* Gráfico de Pizza */}
       <section className="card">
         <div className="chart-wrapper">
           <Doughnut 
@@ -93,50 +111,67 @@ export default function App() {
         </div>
       </section>
 
-      {/* Formulário Principal */}
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
           <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})} style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}>
-            <option value="happy"> Feliz/Radiante </option>
-            <option value="neutral"> Calmo/Normal </option>
-            <option value="sad"> Triste/Deprê </option>
-            <option value="anxious"> Ansioso/Nervoso </option>
-            <option value="angry"> Bravo/Altamente Stressado </option>
+            <option value="happy">Verde Menta (Feliz)</option>
+            <option value="neutral">Bege Neutro (Calmo)</option>
+            <option value="sad">Azul Pastel (Triste)</option>
+            <option value="anxious">Lavanda Clarinho (Ansioso)</option>
+            <option value="angry">Coral Melancia (Bravo)</option>
           </select>
         </div>
+        
         <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
         <div className="form-group"><label>Emoção</label><textarea placeholder="O que sentiu?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} /></div>
         <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
         <div className="form-group"><label>Comportamento</label><textarea placeholder="O que fez?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} /></div>
-        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO REGISTRO</button>
+        
+        {/* NOVO CAMPO DE DATA */}
+        <div className="form-group date-selection">
+          <label>Quando isso aconteceu?</label>
+          <div className="date-chips">
+            <button type="button" className={dateType === 'hoje' ? 'chip active' : 'chip'} onClick={() => setDateType('hoje')}>HOJE</button>
+            <button type="button" className={dateType === 'ontem' ? 'chip active' : 'chip'} onClick={() => setDateType('ontem')}>ONTEM</button>
+            <button type="button" className={dateType === 'outro' ? 'chip active' : 'chip'} onClick={() => setDateType('outro')}>OUTRA DATA</button>
+          </div>
+          {dateType === 'outro' && (
+            <input 
+              type="date" 
+              className="custom-date-input" 
+              value={customDate} 
+              onChange={(e) => setCustomDate(e.target.value)} 
+            />
+          )}
+        </div>
+
+        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
       </form>
 
-      {/* Visão de Calendário */}
-<div className="card calendar-card">
-  <div className="calendar-header">
-    <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
-      <ChevronLeft size={20}/>
-    </button>
-    <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
-    <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
-      <ChevronRight size={20}/>
-    </button>
-  </div>
-  <div className="calendar-grid">
-    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
-    {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
-    {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
-      <div key={day} className="calendar-day">
-        <div className="day-dot" style={{ backgroundColor: getDayColor(day) }}>
-          <span className="day-number">{day}</span>
+      <div className="card calendar-card">
+        <div className="calendar-header">
+          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
+            <ChevronLeft size={20}/>
+          </button>
+          <h3>{currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
+          <button className="icon-btn-small" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
+            <ChevronRight size={20}/>
+          </button>
+        </div>
+        <div className="calendar-grid">
+          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} className="calendar-day-label">{d}</div>)}
+          {Array(firstDayOfMonth).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
+          {Array.from({ length: daysInMonth(currentMonth) }, (_, i) => i + 1).map(day => (
+            <div key={day} className="calendar-day">
+              <div className="day-dot" style={{ backgroundColor: getDayColor(day) }}>
+                <span className="day-number">{day}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    ))}
-  </div>
-</div>
 
-      {/* Busca e Filtros */}
       <div className="search-section">
         <div className="search-bar-container">
           <div className="search-input-wrapper">
@@ -153,13 +188,12 @@ export default function App() {
         </div>
       </div>
 
-      {/* Histórico */}
       <div className="entries-list">
         {filteredEntries.map(e => (
           <div key={e.id} className="entry-card" style={{ borderLeft: `6px solid ${MOOD_COLORS[e.mood]}` }}>
             <div className="entry-header">
               <span style={{color: MOOD_COLORS[e.mood], fontWeight: 'bold'}}>{e.mood.toUpperCase()}</span>
-              <span>{new Date(e.date).toLocaleDateString()}</span>
+              <span>{new Date(e.date).toLocaleDateString('pt-BR')}</span>
               <Trash2 size={18} onClick={() => setEntries(entries.filter(i => i.id !== e.id))} style={{cursor: 'pointer'}} />
             </div>
             <div className="entry-section-title">Situação</div><div className="entry-text">{e.situation}</div>
