@@ -98,18 +98,18 @@ export default function App() {
         <div className="form-group">
           <label>Qual o seu tom agora?</label>
           <select value={formData.mood} onChange={e => setFormData({...formData, mood: e.target.value})} style={{ borderLeft: `6px solid ${MOOD_COLORS[formData.mood]}` }}>
-            <option value="happy">Verde Menta (Feliz)</option>
-            <option value="neutral">Bege Neutro (Calmo)</option>
-            <option value="sad">Azul Pastel (Triste)</option>
-            <option value="anxious">Lavanda Clarinho (Ansioso)</option>
-            <option value="angry">Coral Melancia (Bravo)</option>
+            <option value="happy">Feliz </option>
+            <option value="neutral">Calmo/Normal </option>
+            <option value="sad">Triste/Deprê </option>
+            <option value="anxious">Ansioso/Nervoso </option>
+            <option value="angry">Bravo/Altamente Stressado </option>
           </select>
         </div>
         <div className="form-group"><label>Situação</label><textarea placeholder="O que aconteceu?" value={formData.situation} onChange={e => setFormData({...formData, situation: e.target.value})} /></div>
         <div className="form-group"><label>Emoção</label><textarea placeholder="O que sentiu?" value={formData.emotion} onChange={e => setFormData({...formData, emotion: e.target.value})} /></div>
         <div className="form-group"><label>Pensamento</label><textarea placeholder="O que pensou?" value={formData.thoughts} onChange={e => setFormData({...formData, thoughts: e.target.value})} /></div>
         <div className="form-group"><label>Comportamento</label><textarea placeholder="O que fez?" value={formData.behavior} onChange={e => setFormData({...formData, behavior: e.target.value})} /></div>
-        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO DIÁRIO</button>
+        <button type="submit" className="btn-primary"><CheckCircle2 size={22} /> SALVAR NO REGISTRO</button>
       </form>
 
       {/* Visão de Calendário */}
