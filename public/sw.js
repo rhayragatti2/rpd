@@ -1,22 +1,58 @@
-// public/sw.js
+const CACHE_NAME = 'mindlog-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+];
+
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+  );
   self.skipWaiting();
-  console.log('SW Instalado');
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('SW Ativado');
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
 });
 
-// Escuta comandos do App principal
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  if (request.url.includes('firestore.googleapis.com') || request.url.includes('identitytoolkit.googleapis.com')) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      const fetched = fetch(request).then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => cached);
+
+      return cached || fetched;
+    })
+  );
+});
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     self.registration.showNotification(event.data.title, {
       body: event.data.body,
-      icon: 'https://cdn-icons-png.flaticon.com/512/3665/3665923.png',
-      badge: 'https://cdn-icons-png.flaticon.com/512/3665/3665923.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200],
-      tag: 'lembrete-diario' // Evita notificações duplicadas
+      tag: 'lembrete-diario',
     });
   }
 });

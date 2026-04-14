@@ -1,42 +1,77 @@
-# rpd
-App para registro de pensamentos diário para monitoramento de humor, emoções, pensamentos e gatilhos emocionais. 
+# MindLog - Registro de Pensamentos Disfuncionais (RPD Digital)
 
-# 🧠 Registro de Pensamentos Disfuncionais(RPD Digital)
+Um **Web App Progressivo (PWA)** para registro de pensamentos, emoções e comportamentos, baseado na técnica de Registro de Pensamentos Disfuncionais (RPD).
 
-Este é um **Web App Progressivo (PWA)** desenvolvido para facilitar o registro de pensamentos, emoções e comportamentos, utilizando a técnica de Registro de Pensamentos Disfuncionais (RPD). 
+O aplicativo usa Firebase para autenticação e armazenamento, com suporte offline integrado via Firestore — os dados são sincronizados automaticamente quando a conexão retorna.
 
-O aplicativo funciona totalmente offline após o primeiro carregamento e salva os dados localmente no seu dispositivo, garantindo total privacidade.
+## Funcionalidades
 
-## ✨ Funcionalidades
+- **Registro Completo:** Campos para Situação, Emoção, Pensamentos e Comportamentos
+- **Humor por Cores:** Visualização intuitiva baseada no estado emocional selecionado
+- **Gráfico de Humor:** Dashboard com gráfico doughnut mostrando a distribuição de emoções
+- **Calendário de Humor:** Visualização mensal com indicadores coloridos por dia
+- **Filtros e Busca:** Filtre por humor ou busque palavras-chave nos registros
+- **Exportação PDF:** Gere relatórios consolidados para levar à sessão de terapia
+- **PWA Instalável:** Adicione à tela inicial do celular como um aplicativo nativo
+- **Suporte Offline:** Dados são cacheados localmente e sincronizados quando online
 
-- 📝 **Registro Completo:** Campos específicos para Situação, Pensamentos, Emoções e Comportamentos.
-- 🎨 **Humor por Cores:** Visualização intuitiva baseada no estado emocional selecionado.
-- 📊 **Gráfico de Humor:** Dashboard visual que mostra a distribuição dos seus sentimentos.
-- 🔍 **Filtros e Busca:** Organize por dia, semana ou mês, ou busque palavras-chave específicas.
-- 💡 **Insights de Gatilhos:** Analisa automaticamente as palavras mais frequentes em momentos de crise.
-- 📄 **Exportação PDF:** Gere relatórios consolidados para levar à sua sessão de terapia.
-- 🌙 **Modo Noturno:** Interface adaptável para uso em ambientes escuros.
-- 📱 **PWA (Instalável):** Adicione à tela inicial do seu celular como um aplicativo nativo.
+## Tecnologias
 
-## 🚀 Como instalar no Celular
+- **React 18** + **Vite** (build e dev server)
+- **Firebase Auth** (autenticação por e-mail/senha)
+- **Cloud Firestore** (banco de dados com persistência offline)
+- **Chart.js** + **react-chartjs-2** (visualização de dados)
+- **jsPDF** + **jspdf-autotable** (exportação de relatórios)
+- **Lucide React** (ícones)
 
-Como este projeto está hospedado no GitHub Pages, você pode instalá-lo sem passar pela App Store ou Play Store:
+## Configuração
 
-1. Acesse o link do projeto pelo navegador do celular.
-2. **No iOS (Safari):** Clique no botão de compartilhar (ícone do quadrado com seta) e selecione "Adicionar à Tela de Início".
-3. **No Android (Chrome):** Clique nos três pontos verticais e selecione "Instalar Aplicativo" ou "Adicionar à Tela Inicial".
+1. Clone o repositório
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+3. Crie um projeto no [Firebase Console](https://console.firebase.google.com):
+   - Ative **Authentication** com o provedor Email/Password
+   - Crie um banco **Cloud Firestore** em modo produção
+   - Adicione as regras de segurança do Firestore (veja abaixo)
+4. Copie o arquivo `.env` e preencha com suas credenciais Firebase:
+   ```
+   VITE_FIREBASE_API_KEY=...
+   VITE_FIREBASE_AUTH_DOMAIN=...
+   VITE_FIREBASE_PROJECT_ID=...
+   VITE_FIREBASE_STORAGE_BUCKET=...
+   VITE_FIREBASE_MESSAGING_SENDER_ID=...
+   VITE_FIREBASE_APP_ID=...
+   ```
+5. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
 
-## 🛠️ Tecnologias Utilizadas
+## Regras do Firestore
 
-- **HTML5** (Estrutura e PWA Manifest)
-- **CSS3** (Layout Responsivo e CSS Variables para Temas)
-- **JavaScript Vanilla** (Lógica de persistência e filtros)
-- **Chart.js** (Visualização de dados)
-- **jsPDF & AutoTable** (Geração de relatórios)
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /entries/{entryId} {
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.user_id;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+    }
+    match /profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
 
-## 🔒 Privacidade
+## Instalar no Celular
 
-Todos os dados registrados neste aplicativo são armazenados exclusivamente no **LocalStorage** do seu navegador. Isso significa que nenhum dado é enviado para servidores externos. Suas informações permanecem apenas no seu dispositivo.
+1. Acesse o link do projeto pelo navegador do celular
+2. **iOS (Safari):** Compartilhar > "Adicionar à Tela de Início"
+3. **Android (Chrome):** Menu > "Instalar Aplicativo"
 
 ---
-*Desenvolvido como uma ferramenta de apoio ao autoconhecimento.*
+
+*Desenvolvido como ferramenta de apoio ao autoconhecimento.*
