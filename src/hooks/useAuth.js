@@ -11,6 +11,7 @@ import { auth } from '../lib/firebase';
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const normalizeEmail = (email) => email.trim().toLowerCase();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -21,16 +22,17 @@ export function useAuth() {
   }, []);
 
   const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+    signInWithEmailAndPassword(auth, normalizeEmail(email), password);
 
   const register = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password);
+    createUserWithEmailAndPassword(auth, normalizeEmail(email), password);
 
   const logout = async () => {
     await signOut(auth);
   };
 
-  const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+  const resetPassword = (email) =>
+    sendPasswordResetEmail(auth, normalizeEmail(email));
 
   return { user, loading, login, register, logout, resetPassword };
 }
