@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Mic, MicOff } from 'lucide-react';
 import { MOOD_COLORS } from '../constants/moods';
 import { useToast } from './Toast';
 import MoodPicker from './MoodPicker';
+import { useSpeechToText } from '../hooks/useSpeechToText';
 
 const INITIAL_FORM = { situation: '', emotion: '', thoughts: '', behavior: '', mood: 'neutral' };
 
@@ -13,6 +14,30 @@ export default function JournalForm({ onSubmit, currentMood, onMoodChange }) {
   const [submitting, setSubmitting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const addToast = useToast();
+
+  const handleSpeechResult = useCallback((transcript) => {
+    setFormData((prev) => ({
+      ...prev,
+      situation: prev.situation
+        ? prev.situation + ' ' + transcript
+        : transcript,
+    }));
+  }, []);
+
+  const handleSpeechError = useCallback((msg) => {
+    addToast(msg, 'error');
+  }, [addToast]);
+
+  const { isListening, start, stop, supported } = useSpeechToText({
+    lang: 'pt-BR',
+    onResult: handleSpeechResult,
+    onError: handleSpeechError,
+  });
+
+  const toggleMic = useCallback(() => {
+    if (isListening) stop();
+    else start();
+  }, [isListening, start, stop]);
 
   const handleMoodChange = useCallback((mood) => {
     setFormData((prev) => ({ ...prev, mood }));
@@ -46,10 +71,23 @@ export default function JournalForm({ onSubmit, currentMood, onMoodChange }) {
       <MoodPicker value={formData.mood} onChange={handleMoodChange} />
 
       <div className="form-group">
-        <label htmlFor="situation" className="form-label">O que aconteceu?</label>
+        <div className="label-with-mic">
+          <label htmlFor="situation" className="form-label">O que aconteceu?</label>
+          {supported && (
+            <button
+              type="button"
+              className={`mic-btn ${isListening ? 'mic-btn--recording' : ''}`}
+              onClick={toggleMic}
+              aria-label={isListening ? 'Parar gravação' : 'Gravar áudio'}
+            >
+              {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+              {isListening && <span className="mic-label">Ouvindo...</span>}
+            </button>
+          )}
+        </div>
         <textarea
           id="situation"
-          placeholder="Descreva a situação..."
+          placeholder={isListening ? 'Fale agora...' : 'Descreva a situação...'}
           value={formData.situation}
           onChange={(e) => setFormData({ ...formData, situation: e.target.value })}
           rows={3}

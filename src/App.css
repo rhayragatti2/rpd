@@ -578,3 +578,32 @@ textarea { resize: none; }
   color: var(--text-secondary); opacity: 0.5;
   margin-top: 24px;
 }
+
+/* ========== MIC BUTTON ========== */
+.label-with-mic {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.label-with-mic .form-label { margin-bottom: 0; }
+
+.mic-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--card-bg-elevated); border: 1px solid var(--border);
+  color: var(--text-secondary); border-radius: 20px;
+  padding: 5px 10px; cursor: pointer; font-family: inherit;
+  font-size: 0.65rem; font-weight: 600;
+  transition: all 0.25s ease;
+}
+.mic-btn:active { transform: scale(0.95); }
+.mic-btn--recording {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: var(--danger);
+  animation: micPulse 1.5s ease-in-out infinite;
+}
+.mic-label { text-transform: uppercase; letter-spacing: 0.3px; }
+
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0.15); }
+}
